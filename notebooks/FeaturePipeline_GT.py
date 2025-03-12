@@ -249,12 +249,7 @@ mlclient.log(
 
 # COMMAND ----------
 
-data = source_1_df.toPandas()
-data.display()
-
-# COMMAND ----------
-
-output_1_df = spark.createDataFrame(data)
+source_1_df = source_1_df.withColumnRenamed("qty", "units_sold")
 
 # COMMAND ----------
 
