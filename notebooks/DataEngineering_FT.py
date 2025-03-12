@@ -24,14 +24,16 @@ import json
 from MLCORE_SDK import mlclient
 from pyspark.sql import functions as F
 # import pickle
+
 # COMMAND ----------
+
 try:
     solution_config = (dbutils.widgets.get("solution_config"))
     solution_config = json.loads(solution_config)
     print("Loaded Solution Config from job params")
 except Exception as e:
     print(e)
-    with open('../data_config/SolutionConfig.yaml', 'r') as solution_config:
+    with open('/Workspace/Users/vamsi.podipireddi@tigeranalytics.com/retail_price/data_config/SolutionConfig.yaml', 'r') as solution_config:
         solution_config = yaml.safe_load(solution_config)  
 
 # COMMAND ----------
@@ -105,7 +107,8 @@ mlclient.log(
 
 # COMMAND ----------
 
-output_1_df = source_1_df.drop('date','id','timestamp','WTG')
+output_1_df = source_1_df.drop('date','id','timestamp')
+output_1_df = output_1_df.withColumnRenamed("Index", "index")
 
 # COMMAND ----------
 
@@ -230,6 +233,3 @@ mlclient.log(operation_type = "register_table",
     # register_in_feature_store=True,
     tracking_url = tracking_url,
     verbose=True,)
-
-# COMMAND ----------
-

@@ -31,7 +31,7 @@ try:
     print("Loaded Solution Config from job params")
 except Exception as e:
     print(e)
-    with open('../data_config/SolutionConfig.yaml', 'r') as solution_config:
+    with open('/Workspace/Users/vamsi.podipireddi@tigeranalytics.com/retail_price/data_config/SolutionConfig.yaml', 'r') as solution_config:
         solution_config = yaml.safe_load(solution_config)  
 
 # COMMAND ----------
@@ -106,10 +106,7 @@ mlclient.log(
 # COMMAND ----------
 
 output_1_df = source_1_df.drop('date','id','timestamp')
-
-# COMMAND ----------
-
-output_1_df.display()
+output_1_df = output_1_df.withColumnRenamed("Index", "index")
 
 # COMMAND ----------
 
