@@ -1,7 +1,7 @@
 general_configs: 
   sdk_session_id: 
     dev: 34dc9e5e023b4cf3bf68695433fa5b11
-    uat: 7e79fc0b5b1e4cadbe40141d9f1b9af3
+    uat: dab49ea5cad4439faf6836f11aaafd4c
     prod: 64ec92d6117247877965d152
   tracking_env: uat
   tracking_url : mlcoreuatv2pg21.azurewebsites.net
