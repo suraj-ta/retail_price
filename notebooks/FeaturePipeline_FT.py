@@ -8,6 +8,7 @@ from pyspark.sql import SparkSession, functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 from pyspark.sql.window import Window
 from datetime import datetime
+import pandas as pd
 
 # COMMAND ----------
 
@@ -42,12 +43,8 @@ try:
     print("Loaded Solution Config from job params")
 except Exception as e:
     print(e)
-    with open('../data_config/SolutionConfig.yaml', 'r') as solution_config:
+    with open('/Workspace/Users/vamsi.podipireddi@tigeranalytics.com/retail_price/data_config/SolutionConfig.yaml', 'r') as solution_config:
         solution_config = yaml.safe_load(solution_config)  
-
-# COMMAND ----------
-
-import pandas as pd
 
 # COMMAND ----------
 
@@ -87,6 +84,7 @@ else:
     cron_job_schedule = solution_config["data_prep_deployment_ft"].get("cron_job_schedule","0 */10 * ? * *")
 
 # COMMAND ----------
+
 def get_name_space(table_config):
     data_objects = {}
     for table_name, config in table_config.items() : 
@@ -191,6 +189,10 @@ def update_task_logger(catalog_name, db_name, task_logger_table_name, end_marker
 
 # COMMAND ----------
 
+input_table_paths
+
+# COMMAND ----------
+
 if task.lower() != "fe":
     task_logger_table_name = f"{output_table_configs['output_1']['table']}_task_logger"
     source_1_df ,start_marker,end_marker= get_the_batch_data(output_table_configs["output_1"]["catalog_name"], output_table_configs["output_1"]["schema"], input_table_paths['input_1'], task_logger_table_name, batch_size)
@@ -259,177 +261,31 @@ data.head(10)
 
 # COMMAND ----------
 
-data['diff'] = data['base_price'] - data['total_price']
-data['relative_diff_base'] = data['diff']/data['base_price']
-data['relative_diff_total'] = data['diff']/data['total_price']
-data
+# DBTITLE 1,Feature engineering
+data["year"] = data["year"] - 2017
+data["weekend"] = data["weekend"] - 8
+data["weekday"] = data["weekday"] - 20
+
+pcn_encode_dict = {
+    'bed_bath_table': 0,
+    'garden_tools': 1,
+    'consoles_games': 2,
+    'health_beauty':3,
+    'cool_stuff':4,
+    'perfumery':5,
+    'computers_accessories':6,
+    'watches_gifts':7,
+    'furniture_decor':8
+}
+data["product_category_name"] = data["product_category_name"].map(pcn_encode_dict)
+
+round_cols = ["freight_price", "unit_price", "s", "comp_1", "comp_2", "comp_3", "lag_price"]
+for col in round_cols:
+    data[col] = data[col].round(2)
 
 # COMMAND ----------
 
-from datetime import datetime
-data['week'] = data['week'].astype('str')
-data['week'] = [datetime.strptime(x, '%Y-%m-%d') for x in data['week']]
-
-import datetime
-data['weekend_date'] = [x + datetime.timedelta(days=6) for x in data['week']]
-
-# COMMAND ----------
-
-data.head(10)
-
-# COMMAND ----------
-
-import datetime 
-def extract_time_features(df):
-    
-    start_date = datetime.datetime(2011,1, 17)
-    
-    print('starting basic feature extraction for week start date!')
-
-    df['year'] = df['week'].dt.year
-    df['month'] = df['week'].dt.month
-    df['weekday'] = df['week'].dt.dayofweek
-    df['weeknum'] = df['week'].dt.weekofyear
-    
-    df['week_serial']  = [divmod((x-start_date).total_seconds(), 86400)[0]/7 for x in df['week']]
-    
-
-    '''
-    print('starting month end related feature extraction for week start date!')
-
-    df['quarter'] = [x.quarter for x in df['week']]
-    df['is_month_start'] = [x.is_month_start for x in df['week']]
-    df['is_month_end'] = [x.is_month_end for x in df['week']]
-    df['is_month_start'] = df['is_month_start'].astype(int)
-    df['is_month_end'] = df['is_month_end'].astype(int)
-    
-    df['start_week']= df.assign(start_week=pd.cut(df.date,[0,9,15,23,31],labels=[1,2,3,4]))['start_week']
-    df['start_week'] = df['start_week'].astype(int)
-    '''
-
-    print('Starting basic feature extraction for week end date!')
-    
-    df['end_year'] = df['weekend_date'].dt.year
-    df['end_date'] = [x.day for x in df['weekend_date']]
-    df['end_month'] = df['weekend_date'].dt.month
-    df['end_weekday'] = df['weekend_date'].dt.dayofweek
-    df['end_weeknum'] = df['weekend_date'].dt.weekofyear
-    df['end_week_serial']  = [divmod((x-start_date).total_seconds(), 86400)[0]/7 for x in df['weekend_date']]
-
-    '''
-    print('starting month end related feature extraction for week start date!')
-
-    df['end_quarter'] = [x.quarter for x in df['weekend_date']]
-    df['end_is_month_start'] = [x.is_month_start for x in df['weekend_date']]
-    df['end_is_month_end'] = [x.is_month_end for x in df['weekend_date']]
-    df['end_is_month_start'] = df['end_is_month_start'].astype(int)
-    df['end_is_month_end'] = df['end_is_month_end'].astype(int)
-    
-    df['end_week'] = df.assign(end_week=pd.cut(df.end_date,[0,9,15,23,31],labels=[1,2,3,4]))['end_week']
-    df['end_week'] = df['end_week'].astype(int)
-    '''
-    return df
-
-
-# COMMAND ----------
-
-data = extract_time_features(data)
-
-# COMMAND ----------
-
-data
-
-# COMMAND ----------
-
-data.columns
-
-# COMMAND ----------
-
-data.display()
-
-# COMMAND ----------
-
-end_date = pd.to_datetime('2022-01-01 00:00:00')  # Set your desired end date
-freq = '10T'  # '10T' represents a 10-minute frequency
-
-# Calculate the start date
-start_date = end_date - pd.to_timedelta((len(data) - 1) * pd.to_timedelta(freq))
-
-# Step 2: Create a new date column with 10-minute frequency
-date_range = pd.date_range(start=start_date, end=end_date, freq=freq)
-
-# Step 3: Add the new date column to the DataFrame
-data['date_time'] = date_range[:len(data)]
-
-# COMMAND ----------
-
-data.display()
-
-# COMMAND ----------
-
-data["date_time"].value_counts()
-
-# COMMAND ----------
-
-data.info()
-
-# COMMAND ----------
-
-data.isnull().sum()
-
-# COMMAND ----------
-
-df_wind = data.sort_values(by='date_time')
-
-# COMMAND ----------
-
-df_wind.display()
-
-# COMMAND ----------
-
-from sklearn.preprocessing import MinMaxScaler
-
-# Define the columns to exclude from min-max scaling
-exclude_columns = ['index', 'date_time', 'timestamp', 'date', 'id']
-
-# Create a MinMaxScaler
-scaler = MinMaxScaler()
-
-# Apply min-max scaling to the DataFrame while excluding specified columns
-scaled_columns = df_wind.drop(columns=exclude_columns).select_dtypes(include=['float64', 'int64']).columns
-df_wind[scaled_columns] = scaler.fit_transform(df_wind[scaled_columns])
-
-# COMMAND ----------
-
-# df_wind['day'] = df_wind['date_time'].dt.day
-# df_wind['month'] = df_wind['date_time'].dt.month
-# df_wind["day_of_week"] = df_wind['date_time'].dt.strftime('%A')
-# df_wind['quarter'] = df_wind['date_time'].dt.quarter
-# quarter_mapping = {1: 'Q1', 2: 'Q2', 3: 'Q3', 4: 'Q4'}
-# df_wind['quarter'] = df_wind['quarter'].map(quarter_mapping)
-
-# COMMAND ----------
-
-# from sklearn.preprocessing import LabelEncoder
-# le = LabelEncoder()
-# df_wind['quarter'] = le.fit_transform(df_wind['quarter'])
-# df_wind['day_of_week'] = le.fit_transform(df_wind['day_of_week'])
-
-# COMMAND ----------
-
-from pyspark.sql.functions import to_date
-
-# COMMAND ----------
-
-df_wind.display()
-
-# COMMAND ----------
-
-output_1_df = spark.createDataFrame(df_wind)
-
-# COMMAND ----------
-
-output_1_df = output_1_df.withColumn('week', to_date(output_1_df['week'], 'yyyy-MM-dd'))
+output_1_df = spark.createDataFrame(data)
 
 # COMMAND ----------
 
@@ -461,7 +317,6 @@ def to_date_(col):
     return F.coalesce(*[F.to_date(col, f) for f in formats])
 
 # COMMAND ----------
-
 
 from datetime import datetime
 from pyspark.sql import functions as F

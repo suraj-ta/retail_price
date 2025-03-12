@@ -254,19 +254,6 @@ data.display()
 
 # COMMAND ----------
 
-from sklearn.preprocessing import MinMaxScaler
-# Define the columns to exclude from min-max scaling
-exclude_columns = ['index', 'timestamp', 'date', 'id']
-
-# Create a MinMaxScaler
-scaler = MinMaxScaler()
-
-# Apply min-max scaling to the DataFrame while excluding specified columns
-scaled_columns = data.drop(columns=exclude_columns).columns
-data[scaled_columns] = scaler.fit_transform(data[scaled_columns])
-
-# COMMAND ----------
-
 output_1_df = spark.createDataFrame(data)
 
 # COMMAND ----------
