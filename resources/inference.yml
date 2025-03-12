@@ -1,7 +1,7 @@
 resources:
   jobs:
-    model_daily_df_2802_v3_inference:
-      name: model_daily_df_2802_v3_inference
+    model_retail_prices_1203_inference:
+      name: model_retail_prices_1203_inference
       type: Inference
       #is_deterministic: False
 
