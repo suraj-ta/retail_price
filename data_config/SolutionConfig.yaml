@@ -1,0 +1,255 @@
+general_configs: 
+  sdk_session_id: 
+    dev: 34dc9e5e023b4cf3bf68695433fa5b11
+    uat: 7e79fc0b5b1e4cadbe40141d9f1b9af3
+    prod: 64ec92d6117247877965d152
+  tracking_env: uat
+  tracking_url : mlcoreuatv2pg21.azurewebsites.net
+
+
+data_engineering_ft:
+  datalake_configs:
+    input_tables:
+      source_1: 
+        catalog_name: mlcore_dev
+        schema: Dailf_df_orders_2802
+        table: df_reg_ft_2802
+        primary_keys: index
+    output_tables:
+      output_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: df_reg_ft_2802_v3
+        primary_keys: index
+  storage_configs:
+    cloud_provider: databricks_uc
+    params:
+      metastore: null
+      catalog_name: mlcore_dev
+      schema_name: mlcore
+      volume_name: mlcore_volume
+  is_scheduled: false
+  batch_size: 500
+  cron_job_schedule: "0 */30 * ? * *"
+
+data_engineering_gt:
+  datalake_configs:
+    input_tables:
+      source_1: 
+        catalog_name: mlcore_dev
+        schema: Dailf_df_orders_2802
+        table: df_reg_gt_2802
+        primary_keys: index
+    output_tables:
+      output_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: df_reg_gt_2802_v3
+        primary_keys: index
+  storage_configs:
+    cloud_provider: databricks_uc
+    params:
+      metastore: null
+      catalog_name: mlcore_dev
+      schema_name: mlcore
+      volume_name: mlcore_volume
+  is_scheduled: false
+  batch_size: 500
+  cron_job_schedule: "0 */30 * ? * *"
+
+feature_pipelines_ft:
+  datalake_configs:
+    input_tables:
+      input_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: df_reg_ft_2802_v3
+        primary_keys: index
+    output_tables:
+      output_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: Transformed_daily_df_FT_2802_v3
+        primary_keys: index
+  storage_configs:
+    cloud_provider: databricks_uc
+    params:
+      metastore: null
+      catalog_name: mlcore_dev
+      schema_name: mlcore
+      volume_name: mlcore_volume
+  is_scheduled: false
+
+feature_pipelines_gt:
+  datalake_configs:
+    input_tables: 
+      input_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: df_reg_gt_2802_v3
+        primary_keys: index
+    output_tables: 
+      output_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: Transformed_daily_df_GT_2802_v3
+        primary_keys: index  
+  storage_configs:
+    cloud_provider: databricks_uc
+    params:
+      metastore: null
+      catalog_name: mlcore_dev
+      schema_name: mlcore
+      volume_name: mlcore_volume
+  is_scheduled: false
+
+train:
+  datalake_configs:
+    input_tables: 
+      input_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: Transformed_daily_df_FT_2802_v3
+        primary_keys: index
+      input_2:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: Transformed_daily_df_GT_2802_v3
+        primary_keys: index
+    output_tables: 
+      output_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: train_output_daily_df_2802_v3
+        primary_keys: index
+  model_configs:
+    registry_platform: databricks
+    model_registry: mlflow
+    unity_catalog: "yes"
+    model_registry_params:
+      catalog_name: mlcore_dev
+      schema_name: daily_df_uc_2802_v3
+    model_params:      
+      model_name: model_daily_df_2802_v3
+  storage_configs:
+    cloud_provider: databricks_uc
+    params:
+      metastore: null
+      catalog_name: mlcore_dev
+      schema_name: mlcore
+      volume_name: mlcore_volume
+  test_size: 0.2
+  feature_columns:
+    - base_price
+    - total_price
+    - diff
+    - relative_diff_base
+    - relative_diff_total
+    - is_featured_sku
+    - is_display_sku
+    - end_week_serial
+    - month
+    - week_serial
+    - year
+    - weekday
+    - weeknum
+    - end_weekday
+    - end_month
+    - end_weeknum
+    - end_date
+    - end_year
+  date_column: week
+  target_columns:
+    - units_sold
+  horizon: 7
+  frequency: 'D'
+  is_scheduled: false
+  hyperparameter_tuning:
+    max_evaluations : 2
+    primary_metric : r2
+    search_range :
+      seasonality_prior_scale : 
+        - 0.1
+        - 10
+      changepoint_prior_scale : 
+        - 0.01
+        - 0.5
+      seasonality_mode : 
+        - multiplicative
+        - additive
+    stop_early : false
+    run_parallel : false
+data_prep_deployment_ft:
+  datalake_configs:
+    input_tables:
+      input_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: df_reg_ft_2802_v3
+        primary_keys: index
+    output_tables:
+      output_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: dpd_daily_df_FT_2802_v3
+        primary_keys: index  
+  storage_configs:
+    cloud_provider: databricks_uc
+    params:
+      metastore: null
+      catalog_name: mlcore_dev
+      schema_name: mlcore
+      volume_name: mlcore_volume
+  is_scheduled: true
+  batch_size: 100
+  cron_job_schedule: "0 */30 * ? * *"
+
+data_prep_deployment_gt:
+  datalake_configs:
+    input_tables: 
+      input_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: df_reg_gt_2802_v3
+        primary_keys: index
+    output_tables: 
+      output_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: dpd_daily_df_GT_2802_v3
+        primary_keys: index  
+  storage_configs:
+    cloud_provider: databricks_uc
+    params:
+      metastore: null
+      catalog_name: mlcore_dev
+      schema_name: mlcore
+      volume_name: mlcore_volume
+  is_scheduled: true
+  batch_size: 100
+  cron_job_schedule: "0 */30 * ? * *"
+
+inference:
+  datalake_configs:
+    input_tables: 
+      input_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: dpd_daily_df_FT_2802_v3
+        primary_keys: index
+      input_2:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: dpd_daily_df_GT_2802_v3
+        primary_keys: index
+    output_tables: 
+      output_1:
+        catalog_name: mlcore_dev
+        schema: daily_df_uc_2802_v3
+        table: inference_output_daily_df_2802_v3
+        primary_keys: index
+  model_configs:
+    use_latest_version: true
+  is_scheduled: true
+  batch_size: 100
+  cron_job_schedule: "0 */30 * ? * *"
