@@ -1,7 +1,7 @@
 resources:
   pipelines:
     - pipeline: ciPipeline  # Local identifier for the dependency
-      source: SDK-demand_forecasting/CI  # Path to the first pipeline's YAML file
+      source: SDK-retail_price/CI  # Path to the first pipeline's YAML file
       trigger:
         branches:
           include:
