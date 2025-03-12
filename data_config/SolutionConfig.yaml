@@ -162,24 +162,7 @@ train:
   date_column:
   target_columns:
     - units_sold
-  horizon: 7
-  frequency: 'D'
   is_scheduled: false
-  hyperparameter_tuning:
-    max_evaluations : 2
-    primary_metric : r2
-    search_range :
-      seasonality_prior_scale : 
-        - 0.1
-        - 10
-      changepoint_prior_scale : 
-        - 0.01
-        - 0.5
-      seasonality_mode : 
-        - multiplicative
-        - additive
-    stop_early : false
-    run_parallel : false
 data_prep_deployment_ft:
   datalake_configs:
     input_tables:

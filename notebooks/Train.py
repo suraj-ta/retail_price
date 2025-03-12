@@ -4,16 +4,9 @@
 
 # COMMAND ----------
 
-raise Exception("Test Exception")
-
-# COMMAND ----------
-
 # DBTITLE 1,Installing MLCore SDK
 # MAGIC %pip install /Volumes/mlcore_dev/mlcore_init_scripts/mlworkspace/MLCORE_INIT/monitor_db_uc/MLCoreSDK_monitor_db_uc-0.4.6-py3-none-any.whl --force-reinstall
 # MAGIC %pip install sparkmeasure
-# MAGIC # %pip install numpy==1.19.1
-# MAGIC
-# MAGIC # %pip install pandas==1.0.5
 
 # COMMAND ----------
 
@@ -39,7 +32,7 @@ try:
     print("Loaded config from dbutils")
 except Exception as e:
     print(e)
-    with open('../data_config/SolutionConfig.yaml', 'r') as solution_config:
+    with open('/Workspace/Users/vamsi.podipireddi@tigeranalytics.com/retail_price/data_config/SolutionConfig.yaml', 'r') as solution_config:
         solution_config = yaml.safe_load(solution_config)  
 
 # COMMAND ----------
@@ -99,9 +92,6 @@ storage_configs = solution_config["train"]["storage_configs"]
 feature_columns = solution_config['train']["feature_columns"]
 target_columns = solution_config['train']["target_columns"]
 test_size = solution_config['train']["test_size"]
-date_column = solution_config['train']["date_column"]
-horizon = solution_config['train']["horizon"]
-frequency = solution_config['train']["frequency"]
 
 # COMMAND ----------
 
@@ -133,19 +123,15 @@ gt_data = spark.sql(f"SELECT * FROM {input_table_paths['input_2']}")
 
 # COMMAND ----------
 
-gt_data.display()
-
-# COMMAND ----------
-
 ft_data.count(), gt_data.count()
 
 # COMMAND ----------
 
-input_table_configs["input_1"]["primary_keys"]
+input_table_configs["input_1"]["primary_keys"], input_table_configs["input_2"]["primary_keys"]
 
 # COMMAND ----------
 
-features_data = ft_data.select([input_table_configs["input_1"]["primary_keys"]] + feature_columns + [date_column])
+features_data = ft_data.select([input_table_configs["input_1"]["primary_keys"]] + feature_columns)
 ground_truth_data = gt_data.select([input_table_configs["input_2"]["primary_keys"]] + target_columns)
 
 # COMMAND ----------
@@ -181,79 +167,30 @@ testdf = final_df_pandas.iloc[:int(final_df_pandas.shape[0] * test_size)]
 
 # COMMAND ----------
 
-try :
-    if is_retrain:
-        hyperparameters = retrain_params.get("hyperparameters", {})
-        print(f"Retraining model with hyper parameters: {hyperparameters}")
-        hp_tuning_result = {}
-    else:
-        hp_tuning_result = dbutils.notebook.run(
-            "Hyperparameter_Tuning", 
-            timeout_seconds=0,)
-        hyperparameters = json.loads(hp_tuning_result)["best_hyperparameters"]
-        report_path = json.loads(hp_tuning_result)["report_path"]
-        print(f"Training Hyperparameters: {hyperparameters}")
-        print(f"Report path: {report_path}")
-except Exception as e:
-    print(e)
-    print("Using default hyper parameters")
-    hyperparameters = {}
-    hp_tuning_result = {}
+import xgboost as xgb
 
-# COMMAND ----------
-
-if not hyperparameters or hyperparameters == {} :
-    model = Prophet()
-    print(f"Using model with default hyper parameters")
-else :
-    model = Prophet(**hyperparameters)
-    print(f"Using model with custom hyper parameters")
-
-# COMMAND ----------
-
-for feature in feature_columns:
-    model.add_regressor(feature, standardize=False)
-
-# COMMAND ----------
-
-train_prophet_df = traindf.rename(columns={date_column: "ds", target_columns[0]: "y"})
-test_prophet_df = testdf.rename(columns={date_column: "ds", target_columns[0]: "y"})
-
-# COMMAND ----------
-
-train_prophet_df
-
-# COMMAND ----------
-
-test_prophet_df
-
-# COMMAND ----------
-
-X_train_np = train_prophet_df.to_numpy()
-X_test_np = test_prophet_df.to_numpy()
-first_row_dict = train_prophet_df[:5].to_numpy()
-
-# COMMAND ----------
-
-model = model.fit(train_prophet_df, iter=200)
-
-# COMMAND ----------
-
+# Prepare the data for XGBoost
+X_train = traindf.drop(columns=target_columns)
 y_train = traindf[target_columns[0]]
+X_test = testdf.drop(columns=target_columns)
 y_test = testdf[target_columns[0]]
 
+model = xgb.XGBRegressor(
+    objective='reg:squarederror',
+    max_depth=6,
+    learning_rate=0.3,  # eta in the scikit-learn API is referred to as learning_rate
+    n_estimators=100,
+    eval_metric='rmse'
+)
+
+# Train the model directly with pandas data
+model.fit(X_train, y_train)
+
+# COMMAND ----------
+
 # Predict
-train_pred = model.predict(train_prophet_df)
-test_pred = model.predict(test_prophet_df)
-
-# COMMAND ----------
-
-model.plot_components(train_pred)
-
-# COMMAND ----------
-
-y_pred_train = train_pred["yhat"].to_numpy()
-y_pred = test_pred["yhat"].to_numpy()
+y_pred_train = model.predict(X_train)
+y_pred = model.predict(X_test)
 
 # COMMAND ----------
 
@@ -283,58 +220,20 @@ train_metrics
 
 # COMMAND ----------
 
-pred_train = traindf
-pred_train["prediction"] = y_pred_train
-
-pred_test = testdf
-pred_test["prediction"] = y_pred
-
-# COMMAND ----------
-
-pred_test[target_columns[0]] = y_test
-pred_train[target_columns[0]] = y_train
-
-# COMMAND ----------
-
-columns_for_reports = ["trend", "daily", "yearly", "weekly"]
-
-# COMMAND ----------
-
-if "daily" not in train_pred.columns:
-    columns_for_reports.remove("daily")
-
-if "weekly" not in train_pred.columns:
-    columns_for_reports.remove("weekly")
-
-if "yearly" not in train_pred.columns:
-    columns_for_reports.remove("yearly")
-
-print(f"Columns considered for report : {columns_for_reports}")
-
-# COMMAND ----------
-
-for report_column in columns_for_reports:
-    if report_column in train_pred.columns:
-        pred_train[report_column] = train_pred[report_column].to_numpy()
-        pred_test[report_column] = test_pred[report_column].to_numpy()
-
-# COMMAND ----------
-
-from MLCORE_SDK.helpers.mlc_helper import get_job_id_run_id
-job_id, run_id, task_id = get_job_id_run_id(dbutils)
-print(job_id, run_id)
-report_directory = f'{env}/media_artifacts/2a3b88f5bb6444b0a19e23e4ef21495a/Solution_configs_upgrades/{job_id}/{run_id}/Tuning_Trails'
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC ## SAVE PREDICTIONS TO HIVE
 
 # COMMAND ----------
 
+pred_train
+
+# COMMAND ----------
+
+pred_train = traindf
 pred_train["prediction"] = y_pred_train
 pred_train["dataset_type_71E4E76EB8C12230B6F51EA2214BD5FE"] = "train"
 
+pred_test = testdf
 pred_test["prediction"] = y_pred
 pred_test["dataset_type_71E4E76EB8C12230B6F51EA2214BD5FE"] = "test"
 
@@ -537,13 +436,13 @@ from MLCORE_SDK import mlclient
 
 # COMMAND ----------
 
-train_prophet_df = train_prophet_df.drop(['index', 'y'], axis=1)
+pred_train = pred_train.drop(['index', target_columns[0]], axis=1)
 
 # COMMAND ----------
 
 import mlflow 
 from mlflow.models.signature import infer_signature
-model_signature = infer_signature(train_prophet_df, pred_train["prediction"].head(5))
+model_signature = infer_signature(pred_train, pred_train["prediction"].head(5))
 
 # COMMAND ----------
 
@@ -568,21 +467,17 @@ model_artifact_id=mlclient.log(operation_type = "register_model",
     target_columns = target_columns,
     table_type="unitycatalog" if output_table_configs["output_1"]["catalog_name"] else "internal",
     train_data_date_dict = train_data_date_dict,
-    hp_tuning_result=hp_tuning_result,
+    hp_tuning_result={},
     compute_usage_metrics = compute_metrics,
     taskmetrics = taskmetrics,
     stagemetrics = stagemetrics,
     tracking_env = tracking_env,
-    date_column=date_column,
-    horizon=horizon,
-    model_documentation_url = "/Workspace/Repos/MLOpsFlow/demand_forecasting_usecase/notebooks/model_documentation.md",
-    frequency=frequency,
-    # register_in_feature_store=True,
+    model_documentation_url = "/Workspace/Repos/MLOpsFlow/retail_price/notebooks/model_documentation.md",
     model_configs = model_configs,
     example_input = first_row_dict,
     tracking_url = tracking_url,
-    signature = model_signature,
-    verbose = True)
+    signature = model_signature
+    )
 
 # COMMAND ----------
 
@@ -655,78 +550,3 @@ mlclient.log(operation_type = "register_table",
     tracking_url = tracking_url,
     platform_table_type = "Aggregated_train_output",
     verbose=True,)
-
-# COMMAND ----------
-
-if not is_retrain:
-    from MLCORE_SDK.helpers.mlc_helper import get_job_id_run_id
-    job_id, run_id ,task_id= get_job_id_run_id(dbutils)
-    print(job_id, run_id)
-
-# COMMAND ----------
-
-if not is_retrain:    
-    from MLCORE_SDK.sdk.manage_sdk_session import get_session
-    existing_session_data = get_session(
-        sdk_session_id,
-        dbutils,
-        api_endpoint=tracking_url,
-        tracking_env=tracking_env,
-    ).json()["data"]
-    existing_session_state = existing_session_data.get("state_dict", {})
-    project_id = existing_session_state.get("project_id", "")
-    version = existing_session_state.get("version", "")
-    print(project_id, version)
-
-# COMMAND ----------
-
-if not is_retrain:    
-    try:
-        print(model_artifact_id)
-        if storage_configs["cloud_provider"] == "databricks_uc":
-            params = storage_configs.get("params",{})
-            catalog_name=params.get("catalog_name","")
-            schema_name = params.get("schema_name","")
-            volume_name = params.get("volume_name","")
-
-            artifact_path_uc_volume = f"/Volumes/{catalog_name}/{schema_name}/{volume_name}/{tracking_env}/media_artifacts/{project_id}/{version}/{job_id}/{run_id}"
-            print(artifact_path_uc_volume)
-            mlclient.log(
-                operation_type = "upload_blob_to_cloud",
-                blob_path=report_path,
-                dbutils = dbutils ,
-                target_path = f"{artifact_path_uc_volume}/Model_Evaluation/Tuning_Trails_report_{int(time.time())}.png",
-                resource_type = "databricks_uc",
-                project_id = project_id,
-                version = version,
-                job_id = job_id,
-                run_id = run_id,
-                model_artifact_id = model_artifact_id,
-                request_type = "Model_Evaluation",
-                storage_configs = storage_configs,
-                api_endpoint=tracking_url,
-                tracking_env = tracking_env,
-                verbose=True)
-        else :
-            report_directory = f"{tracking_env}/media_artifacts/{project_id}/{version}/{job_id}/{run_id}"
-            print(report_directory)
-            container_name = storage_configs.get("container_name")
-            mlclient.log(
-                operation_type = "upload_blob_to_cloud",
-                source_path=report_path,
-                dbutils = dbutils ,
-                target_path = f"{report_directory}/Model_Evaluation/Tuning_Trails_report_{int(time.time())}.png",
-                resource_type = "az",
-                project_id = project_id,
-                version = version,
-                job_id = job_id,
-                run_id = run_id,
-                model_artifact_id = model_artifact_id,
-                request_type = "Model_Evaluation",
-                storage_configs = storage_configs,
-                api_endpoint=tracking_url,
-                tracking_env = tracking_env,
-                verbose=True)
-    except Exception as e:
-        print(Exception, e)
-        
