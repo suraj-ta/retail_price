@@ -287,7 +287,7 @@ type(predictions)
 
 # COMMAND ----------
 
-transformed_features_df["prediction"] = predictions["yhat"]
+transformed_features_df["prediction"] = predictions
 transformed_features_df = pd.merge(transformed_features_df,ground_truth, on=input_table_configs["input_1"]["primary_keys"], how='inner')
 output_table = spark.createDataFrame(transformed_features_df)
 
@@ -321,20 +321,6 @@ output_table = output_table.withColumn("inference_task_id",F.lit(task_id).cast("
 # COMMAND ----------
 
 # MAGIC %md 
-# MAGIC ### Load Model
-
-# COMMAND ----------
-
-# output_table = output_table.drop('date','id','timestamp')
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ### Predict
-
-# COMMAND ----------
-
-# MAGIC %md 
 # MAGIC ### Output Table
 
 # COMMAND ----------
@@ -362,26 +348,6 @@ def to_date_(col):
              "yyyy-dd-MM"
             )
     return F.coalesce(*[F.to_date(col, f) for f in formats])
-
-# COMMAND ----------
-
-# from pyspark.sql import functions as F
-# from pyspark.sql.window import Window
-
-# now = datetime.now()
-# date = now.strftime("%m-%d-%Y")
-# output_table = output_table.withColumn(
-#     "timestamp",
-#     F.expr("reflect('java.lang.System', 'currentTimeMillis')").cast("long"),
-# )
-# output_table = output_table.withColumn("date", F.lit(date))
-# output_table = output_table.withColumn("date", to_date_(F.col("date")))
-
-# # ADD A MONOTONICALLY INREASING COLUMN
-# if "id" not in output_table.columns : 
-#   window = Window.orderBy(F.monotonically_increasing_id())
-#   output_table = output_table.withColumn("id", F.row_number().over(window))
-output_table.display()
 
 # COMMAND ----------
 
