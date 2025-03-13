@@ -1,10 +1,10 @@
 general_configs: 
   sdk_session_id: 
-    dev: 34dc9e5e023b4cf3bf68695433fa5b11
+    dev: f5c3de3eade441b997c6237017e14cdf
     uat: d98eddaad3ef4f77a3bf308fcca9692a
     prod: 64ec92d6117247877965d152
-  tracking_env: uat
-  tracking_url : mlcoreuatv2pg21.azurewebsites.net
+  tracking_env: dev
+  tracking_url : mlcoredevv2sql21test.azurewebsites.net
 
 
 data_engineering_ft:
@@ -18,8 +18,8 @@ data_engineering_ft:
     output_tables:
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: retail_prices_1303_ft
+        schema: retail_prices_1303_v1
+        table: retail_prices_1303_v1_ft
         primary_keys: index
   storage_configs:
     cloud_provider: databricks_uc
@@ -43,8 +43,8 @@ data_engineering_gt:
     output_tables:
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: retail_prices_1303_gt
+        schema: retail_prices_1303_v1
+        table: retail_prices_1303_v1_gt
         primary_keys: index
   storage_configs:
     cloud_provider: databricks_uc
@@ -62,14 +62,14 @@ feature_pipelines_ft:
     input_tables:
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: retail_prices_1303_ft
+        schema: retail_prices_1303_v1
+        table: retail_prices_1303_v1_ft
         primary_keys: index
     output_tables:
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: Transformed_retail_prices_1303_ft
+        schema: retail_prices_1303_v1
+        table: Transformed_retail_prices_1303_v1_ft
         primary_keys: index
   storage_configs:
     cloud_provider: databricks_uc
@@ -85,14 +85,14 @@ feature_pipelines_gt:
     input_tables: 
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: retail_prices_1303_gt
+        schema: retail_prices_1303_v1
+        table: retail_prices_1303_v1_gt
         primary_keys: index
     output_tables: 
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: Transformed_retail_prices_1303_gt
+        schema: retail_prices_1303_v1
+        table: Transformed_retail_prices_1303_v1_gt
         primary_keys: index
   storage_configs:
     cloud_provider: databricks_uc
@@ -108,19 +108,19 @@ train:
     input_tables: 
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: Transformed_retail_prices_1303_ft
+        schema: retail_prices_1303_v1
+        table: Transformed_retail_prices_1303_v1_ft
         primary_keys: index
       input_2:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: Transformed_retail_prices_1303_gt
+        schema: retail_prices_1303_v1
+        table: Transformed_retail_prices_1303_v1_gt
         primary_keys: index
     output_tables: 
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: train_output_retail_prices_1303
+        schema: retail_prices_1303_v1
+        table: train_output_retail_prices_1303_v1
         primary_keys: index
   model_configs:
     registry_platform: databricks
@@ -128,9 +128,9 @@ train:
     unity_catalog: "yes"
     model_registry_params:
       catalog_name: mlcore_dev
-      schema_name: retail_prices_1303
+      schema_name: retail_prices_1303_v1
     model_params:      
-      model_name: model_retail_prices_1303
+      model_name: model_retail_prices_1303_v1
   storage_configs:
     cloud_provider: databricks_uc
     params:
@@ -168,14 +168,14 @@ data_prep_deployment_ft:
     input_tables:
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: retail_prices_1303_ft
+        schema: retail_prices_1303_v1
+        table: retail_prices_1303_v1_ft
         primary_keys: index
     output_tables:
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: dpd_retail_prices_1303_ft
+        schema: retail_prices_1303_v1
+        table: dpd_retail_prices_1303_v1_ft
         primary_keys: index  
   storage_configs:
     cloud_provider: databricks_uc
@@ -193,14 +193,14 @@ data_prep_deployment_gt:
     input_tables: 
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: retail_prices_1303_gt
+        schema: retail_prices_1303_v1
+        table: retail_prices_1303_v1_gt
         primary_keys: index
     output_tables: 
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: dpd_retail_prices_1303_gt
+        schema: retail_prices_1303_v1
+        table: dpd_retail_prices_1303_v1_gt
         primary_keys: index  
   storage_configs:
     cloud_provider: databricks_uc
@@ -218,19 +218,19 @@ inference:
     input_tables: 
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: dpd_retail_prices_1303_ft
+        schema: retail_prices_1303_v1
+        table: dpd_retail_prices_1303_v1_ft
         primary_keys: index
       input_2:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: dpd_retail_prices_1303_gt
+        schema: retail_prices_1303_v1
+        table: dpd_retail_prices_1303_v1_gt
         primary_keys: index
     output_tables: 
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1303
-        table: inference_output_retail_prices_1303
+        schema: retail_prices_1303_v1
+        table: inference_output_retail_prices_1303_v1
         primary_keys: index
   model_configs:
     use_latest_version: true
