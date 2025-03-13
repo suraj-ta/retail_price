@@ -186,6 +186,8 @@ model = xgb.XGBRegressor(
 # Train the model directly with pandas data
 model.fit(X_train, y_train)
 
+first_row_dict = X_train[:5].to_numpy()
+
 # COMMAND ----------
 
 # Predict
