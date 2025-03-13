@@ -225,10 +225,6 @@ train_metrics
 
 # COMMAND ----------
 
-pred_train
-
-# COMMAND ----------
-
 pred_train = traindf
 pred_train["prediction"] = y_pred_train
 pred_train["dataset_type_71E4E76EB8C12230B6F51EA2214BD5FE"] = "train"

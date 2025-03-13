@@ -81,7 +81,6 @@ target_columns = solution_config['train']["target_columns"]
 is_scheduled = solution_config["inference"]["is_scheduled"]
 batch_size = int(solution_config["inference"].get("batch_size",500))
 cron_job_schedule = solution_config["inference"].get("cron_job_schedule","0 */10 * ? * *")
-date_column = solution_config['train']['date_column']
 
 # COMMAND ----------
 
@@ -275,23 +274,10 @@ inference_df = inference_df.rename(columns={date_column: "ds"})
 display(inference_df)
 
 # COMMAND ----------
-def load_model(model_name):
-    valid_model_name = model_name.replace('.', '-').replace('_', '-')
-    model_uri = f"models:/{valid_model_name}/{model_version}"
-    model = mlflow.pyfunc.load_model(model_uri)
-    return model
 
-valid_model_name = Model_name.replace('.', '-').replace('_', '-')
-loaded_model = load_model(valid_model_name)
-
-# def load_model(model_name):
-#     model_uri = f"models:/{model_name}/{model_version}"
-#     model = mlflow.pyfunc.load_model(model_uri)
-#     return model
-
-# COMMAND ----------
-
-loaded_model = load_model(Model_name)
+mlflow.set_registry_uri("databricks-uc")
+model_uri = f"models:/{Model_name}/{model_version}"
+loaded_model = mlflow.xgboost.log_model(model_uri)
 
 # COMMAND ----------
 
