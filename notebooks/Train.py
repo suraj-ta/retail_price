@@ -59,6 +59,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from prophet import Prophet
 import time
 from sklearn.metrics import *
+import mlflow 
 
 # COMMAND ----------
 
@@ -438,7 +439,6 @@ pred_train = pred_train.drop(['index', target_columns[0]], axis=1)
 
 # COMMAND ----------
 
-import mlflow 
 from mlflow.models.signature import infer_signature
 model_signature = infer_signature(pred_train, pred_train["prediction"].head(5))
 
@@ -474,7 +474,8 @@ model_artifact_id=mlclient.log(operation_type = "register_model",
     model_configs = model_configs,
     example_input = first_row_dict,
     tracking_url = tracking_url,
-    signature = model_signature
+    signature = model_signature,
+    verbose=True,
     )
 
 # COMMAND ----------
