@@ -32,7 +32,7 @@ try:
     print("Loaded config from dbutils")
 except Exception as e:
     print(e)
-    with open('/Workspace/Users/vamsi.podipireddi@tigeranalytics.com/retail_price/data_config/SolutionConfig.yaml', 'r') as solution_config:
+    with open('/Workspace/Repos/MLOpsFlow/retail_price/data_config/SolutionConfig.yaml', 'r') as solution_config:
         solution_config = yaml.safe_load(solution_config)  
 
 # COMMAND ----------
@@ -140,6 +140,7 @@ ground_truth_data = gt_data.select([input_table_configs["input_2"]["primary_keys
 
 # DBTITLE 1,Joining Feature and Ground truth tables on primary key
 final_df = features_data.join(ground_truth_data, on = input_table_configs["input_1"]["primary_keys"])
+final_df = final_df.drop(input_table_configs["input_1"]["primary_keys"])
 
 # COMMAND ----------
 
@@ -193,17 +194,9 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
         df["product_category_name"] = df["product_category_name"].map(self.pcn_encode_dict)
         return df
     
-    def train(self, train_df, target_columns):
+    def train(self, X_train, y_train):
         """Performs feature engineering and trains the XGBoost model."""
-        train_df = self.feature_engineering(train_df)
-        
-        # Train/Test Split
-        X_train = train_df.drop(columns=target_columns)
-        y_train = train_df[target_columns[0]]
-        
-        # Drop the index column:
-        X_train = X_train.drop(columns="index")
-
+        X_train = self.feature_engineering(X_train)
         # Train XGBoost Model
         self.model = xgb.XGBRegressor(
             objective='reg:squarederror',
@@ -214,72 +207,39 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
         )
         self.model.fit(X_train, y_train)
     
-    def get_predictions(self, test_df, target_columns):
+    def predict(self, X_test):
         """Applies the trained model on new data."""
-        test_df = self.feature_engineering(test_df)
-
-        # Test data.
-        X_test = test_df.drop(columns=target_columns)
-        X_test = X_test.drop(columns="index")
-
+        X_test = self.feature_engineering(X_test)
         # Ensure model is trained
         if self.model is None:
             raise ValueError("Model has not been trained yet. Call `train()` first.")
-        
+
         return self.model.predict(X_test)
         
 
 # COMMAND ----------
 
+X_train = traindf.drop(columns=target_columns)
+y_train = traindf[target_columns[0]]
 
-# Prepare the data for XGBoost
-# X_train = traindf.drop(columns=target_columns)
-# y_train = traindf[target_columns[0]]
-# X_test = testdf.drop(columns=target_columns)
-# y_test = testdf[target_columns[0]]
-
-# model = xgb.XGBRegressor(
-#     objective='reg:squarederror',
-#     max_depth=6,
-#     learning_rate=0.3,  # eta in the scikit-learn API is referred to as learning_rate
-#     n_estimators=100,
-#     eval_metric='rmse'
-# )
-
-# Train the model directly with pandas data
-# model.fit(X_train, y_train)
+X_test = testdf.drop(columns=target_columns)
+y_test = testdf[target_columns[0]]
 
 # Create model instance.
 model = DemandForecastingModel()
 
 # Train the model
-model.train(traindf, target_columns)
+model.train(X_train, y_train)
 
 # Predictions using the trained model.
-y_pred_train = model.get_predictions(traindf, target_columns)
+y_pred_train = model.predict(X_train)
 print("y_pred_train shape:", y_pred_train.shape)
 
-y_pred = model.get_predictions(testdf, target_columns)
+y_pred = model.predict(X_test)
 print("y_pred shape:", y_pred.shape)
 
-y_train = traindf[target_columns[0]]
-print("y_train shape:", y_train.shape)
 
-y_test = testdf[target_columns[0]]
-print("y_test shape:", y_test.shape)
-
-X_train = model.feature_engineering(traindf)
-X_train = X_train.drop(columns=target_columns)
-
-first_row_dict = X_train[:5].to_numpy()
-
-# COMMAND ----------
-
-print("y_pred_train shape:", y_pred_train.shape)
-print("y_pred shape:", y_pred.shape)
-
-print("y_train shape:", y_train.shape)
-print("y_test shape:", y_test.shape)
+first_row_dict = model.feature_engineering(X_train[:5]).to_numpy()
 
 # COMMAND ----------
 
@@ -314,11 +274,11 @@ train_metrics
 
 # COMMAND ----------
 
-pred_train = model.feature_engineering(traindf)
+pred_train = traindf
 pred_train["prediction"] = y_pred_train
 pred_train["dataset_type_71E4E76EB8C12230B6F51EA2214BD5FE"] = "train"
 
-pred_test = model.feature_engineering(testdf)
+pred_test = testdf
 pred_test["prediction"] = y_pred
 pred_test["dataset_type_71E4E76EB8C12230B6F51EA2214BD5FE"] = "test"
 
@@ -333,8 +293,8 @@ from mlflow.tracking import MlflowClient
 def get_latest_model_version(model_configs):
     try : 
         mlflow_uri = model_configs.get("model_registry_params").get("host_url")
-        model_name = model_configs.get("model_params").get("model_name")
-        mlflow.set_registry_uri(mlflow_uri)
+        model_name = f"{model_configs.get('model_registry_params').get('catalog_name')}.{model_configs.get('model_registry_params').get('schema_name')}.{model_configs.get('model_params').get('model_name')}"
+        mlflow.set_registry_uri('databricks-uc')
         client = MlflowClient()
         x = client.get_latest_versions(model_name)
         model_version = x[0].version
