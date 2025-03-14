@@ -219,7 +219,7 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
         test_df = self.feature_engineering(test_df)
 
         # Test data.
-        X_test = testdf.drop(columns=target_columns)
+        X_test = test_df.drop(columns=target_columns)
         X_test = X_test.drop(columns="index")
 
         # Ensure model is trained
