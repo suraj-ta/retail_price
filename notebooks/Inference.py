@@ -269,8 +269,8 @@ mlclient.log(
 
 ground_truth = gt_df.select([input_table_configs["input_2"]["primary_keys"]] + target_columns).toPandas()
 transformed_features_df = FT_DF.toPandas()
-inference_df = transformed_features_df[[date_column] + feature_columns]
-inference_df = inference_df.rename(columns={date_column: "ds"})
+inference_df = transformed_features_df[feature_columns]
+# inference_df = inference_df.rename(columns={date_column: "ds"})
 display(inference_df)
 
 # COMMAND ----------
