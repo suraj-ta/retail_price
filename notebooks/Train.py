@@ -187,7 +187,7 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
             'furniture_decor': 8
         }
     
-    def _feature_engineering(self, df):
+    def feature_engineering(self, df):
         """Applies categorical encoding to the input DataFrame."""
         df = df.copy()  # Avoid modifying original DataFrame
         df["product_category_name"] = df["product_category_name"].map(self.pcn_encode_dict)
@@ -195,7 +195,7 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
     
     def train(self, train_df, target_columns):
         """Performs feature engineering and trains the XGBoost model."""
-        train_df = self._feature_engineering(train_df)
+        train_df = self.feature_engineering(train_df)
         
         # Train/Test Split
         X_train = train_df.drop(columns=target_columns)
@@ -213,7 +213,7 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
     
     def predict(self, test_df, target_columns):
         """Applies the trained model on new data."""
-        test_df = self._feature_engineering(test_df)
+        test_df = self.feature_engineering(test_df)
 
         # Test data.
         X_test = testdf.drop(columns=target_columns)
@@ -257,6 +257,9 @@ y_pred = model.predict(testdf, target_columns)
 
 y_train = traindf[target_columns[0]]
 y_test = testdf[target_columns[0]]
+
+X_train = model.feature_engineering(traindf)
+X_train = X_train.drop(columns=target_columns)
 
 first_row_dict = X_train[:5].to_numpy()
 
