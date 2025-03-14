@@ -56,10 +56,11 @@ except:
 import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.base import BaseEstimator, TransformerMixin
-from prophet import Prophet
 import time
 from sklearn.metrics import *
-import mlflow 
+import mlflow
+import mlflow.pyfunc
+import xgboost as xgb
 
 # COMMAND ----------
 
@@ -168,32 +169,96 @@ testdf = final_df_pandas.iloc[:int(final_df_pandas.shape[0] * test_size)]
 
 # COMMAND ----------
 
-import xgboost as xgb
+class DemandForecastingModel(mlflow.pyfunc.PythonModel):
+    """
+    DemandForecasting
+    """
+    def __init__(self):
+        self.model = None
+        self.pcn_encode_dict = {
+            'bed_bath_table': 0,
+            'garden_tools': 1,
+            'consoles_games': 2,
+            'health_beauty': 3,
+            'cool_stuff': 4,
+            'perfumery': 5,
+            'computers_accessories': 6,
+            'watches_gifts': 7,
+            'furniture_decor': 8
+        }
+    
+    def _feature_engineering(self, df):
+        """Applies categorical encoding to the input DataFrame."""
+        df = df.copy()  # Avoid modifying original DataFrame
+        df["product_category_name"] = df["product_category_name"].map(self.pcn_encode_dict)
+        return df
+    
+    def train(self, train_df, target_columns):
+        """Performs feature engineering and trains the XGBoost model."""
+        train_df = self._feature_engineering(train_df)
+        
+        # Train/Test Split
+        X_train = train_df.drop(columns=target_columns)
+        y_train = train_df[target_columns[0]]
+        
+        # Train XGBoost Model
+        self.model = xgb.XGBRegressor(
+            objective='reg:squarederror',
+            max_depth=6,
+            learning_rate=0.3,
+            n_estimators=100,
+            eval_metric='rmse'
+        )
+        self.model.fit(X_train, y_train)
+    
+    def predict(self, test_df, target_columns):
+        """Applies the trained model on new data."""
+        test_df = self._feature_engineering(test_df)
 
-# Prepare the data for XGBoost
-X_train = traindf.drop(columns=target_columns)
-y_train = traindf[target_columns[0]]
-X_test = testdf.drop(columns=target_columns)
-y_test = testdf[target_columns[0]]
+        # Test data.
+        X_test = testdf.drop(columns=target_columns)
 
-model = xgb.XGBRegressor(
-    objective='reg:squarederror',
-    max_depth=6,
-    learning_rate=0.3,  # eta in the scikit-learn API is referred to as learning_rate
-    n_estimators=100,
-    eval_metric='rmse'
-)
-
-# Train the model directly with pandas data
-model.fit(X_train, y_train)
-
-first_row_dict = X_train[:5].to_numpy()
+        # Ensure model is trained
+        if self.model is None:
+            raise ValueError("Model has not been trained yet. Call `train()` first.")
+        
+        return self.model.predict(X_test)
+        
 
 # COMMAND ----------
 
-# Predict
-y_pred_train = model.predict(X_train)
-y_pred = model.predict(X_test)
+
+# Prepare the data for XGBoost
+# X_train = traindf.drop(columns=target_columns)
+# y_train = traindf[target_columns[0]]
+# X_test = testdf.drop(columns=target_columns)
+# y_test = testdf[target_columns[0]]
+
+# model = xgb.XGBRegressor(
+#     objective='reg:squarederror',
+#     max_depth=6,
+#     learning_rate=0.3,  # eta in the scikit-learn API is referred to as learning_rate
+#     n_estimators=100,
+#     eval_metric='rmse'
+# )
+
+# Train the model directly with pandas data
+# model.fit(X_train, y_train)
+
+# Create model instance.
+model = DemandForecastingModel()
+
+# Train the model
+model.train(train_df, target_columns)
+
+# Predictions using the trained model.
+y_pred_train = model.predict(train_df, target_columns)
+y_pred = model.predict(test_df, target_columns)
+
+y_train = traindf[target_columns[0]]
+y_test = testdf[target_columns[0]]
+
+first_row_dict = X_train[:5].to_numpy()
 
 # COMMAND ----------
 

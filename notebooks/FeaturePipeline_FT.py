@@ -266,19 +266,6 @@ data["year"] = data["year"] - 2017
 data["weekend"] = data["weekend"] - 8
 data["weekday"] = data["weekday"] - 20
 
-pcn_encode_dict = {
-    'bed_bath_table': 0,
-    'garden_tools': 1,
-    'consoles_games': 2,
-    'health_beauty':3,
-    'cool_stuff':4,
-    'perfumery':5,
-    'computers_accessories':6,
-    'watches_gifts':7,
-    'furniture_decor':8
-}
-data["product_category_name"] = data["product_category_name"].map(pcn_encode_dict)
-
 round_cols = ["freight_price", "unit_price", "s", "comp_1", "comp_2", "comp_3", "lag_price"]
 for col in round_cols:
     data[col] = data[col].round(2)

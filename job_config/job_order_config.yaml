@@ -11,11 +11,13 @@ jobs:
   fe_gt_1:
     depends_on: 
       - de_gt_1
-
-  train_transform:
+  
+  train1:
     depends_on:
       - fe_ft_1
       - fe_gt_1
-  train1:
-    depends_on:
-      - train_transform
+  
+  # train_transform:
+  #   depends_on:
+  #     - fe_ft_1
+  #     - fe_gt_1
