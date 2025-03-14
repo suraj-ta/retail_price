@@ -201,6 +201,9 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
         X_train = train_df.drop(columns=target_columns)
         y_train = train_df[target_columns[0]]
         
+        # Drop the index column:
+        X_train = X_train.drop(columns="index")
+
         # Train XGBoost Model
         self.model = xgb.XGBRegressor(
             objective='reg:squarederror',
@@ -211,12 +214,13 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
         )
         self.model.fit(X_train, y_train)
     
-    def predict(self, test_df, target_columns):
+    def get_predictions(self, test_df, target_columns):
         """Applies the trained model on new data."""
         test_df = self.feature_engineering(test_df)
 
         # Test data.
         X_test = testdf.drop(columns=target_columns)
+        X_test = X_test.drop(columns="index")
 
         # Ensure model is trained
         if self.model is None:
@@ -252,16 +256,30 @@ model = DemandForecastingModel()
 model.train(traindf, target_columns)
 
 # Predictions using the trained model.
-y_pred_train = model.predict(traindf, target_columns)
-y_pred = model.predict(testdf, target_columns)
+y_pred_train = model.get_predictions(traindf, target_columns)
+print("y_pred_train shape:", y_pred_train.shape)
+
+y_pred = model.get_predictions(testdf, target_columns)
+print("y_pred shape:", y_pred.shape)
 
 y_train = traindf[target_columns[0]]
+print("y_train shape:", y_train.shape)
+
 y_test = testdf[target_columns[0]]
+print("y_test shape:", y_test.shape)
 
 X_train = model.feature_engineering(traindf)
 X_train = X_train.drop(columns=target_columns)
 
 first_row_dict = X_train[:5].to_numpy()
+
+# COMMAND ----------
+
+print("y_pred_train shape:", y_pred_train.shape)
+print("y_pred shape:", y_pred.shape)
+
+print("y_train shape:", y_train.shape)
+print("y_test shape:", y_test.shape)
 
 # COMMAND ----------
 
@@ -296,11 +314,11 @@ train_metrics
 
 # COMMAND ----------
 
-pred_train = traindf
+pred_train = model.feature_engineering(traindf)
 pred_train["prediction"] = y_pred_train
 pred_train["dataset_type_71E4E76EB8C12230B6F51EA2214BD5FE"] = "train"
 
-pred_test = testdf
+pred_test = model.feature_engineering(testdf)
 pred_test["prediction"] = y_pred
 pred_test["dataset_type_71E4E76EB8C12230B6F51EA2214BD5FE"] = "test"
 
