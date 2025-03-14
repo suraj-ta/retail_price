@@ -277,7 +277,8 @@ display(inference_df)
 
 mlflow.set_registry_uri("databricks-uc")
 model_uri = f"models:/{Model_name}/{model_version}"
-loaded_model = mlflow.xgboost.log_model(model_uri)
+loaded_model = mlflow.pyfunc.load_model(model_uri)
+# loaded_model = mlflow.xgboost.log_model(model_uri)
 
 # COMMAND ----------
 
