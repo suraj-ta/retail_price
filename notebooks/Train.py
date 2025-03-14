@@ -249,11 +249,11 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
 model = DemandForecastingModel()
 
 # Train the model
-model.train(train_df, target_columns)
+model.train(traindf, target_columns)
 
 # Predictions using the trained model.
-y_pred_train = model.predict(train_df, target_columns)
-y_pred = model.predict(test_df, target_columns)
+y_pred_train = model.predict(traindf, target_columns)
+y_pred = model.predict(testdf, target_columns)
 
 y_train = traindf[target_columns[0]]
 y_test = testdf[target_columns[0]]
