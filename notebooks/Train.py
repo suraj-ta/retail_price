@@ -481,12 +481,8 @@ from MLCORE_SDK import mlclient
 
 # COMMAND ----------
 
-pred_train = pred_train.drop(['index', target_columns[0]], axis=1)
-
-# COMMAND ----------
-
 from mlflow.models.signature import infer_signature
-model_signature = infer_signature(pred_train, pred_train["prediction"].head(5))
+model_signature = infer_signature(X_train, pred_train["prediction"].head(5))
 
 # COMMAND ----------
 
