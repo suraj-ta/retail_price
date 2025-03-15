@@ -207,7 +207,7 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
         )
         self.model.fit(X_train, y_train)
     
-    def predict(self, X_test):
+    def predict(self, context, X_test):
         """Applies the trained model on new data."""
         X_test = self.feature_engineering(X_test)
         # Ensure model is trained
