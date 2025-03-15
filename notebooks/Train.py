@@ -187,11 +187,28 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
             'watches_gifts': 7,
             'furniture_decor': 8
         }
+        self.round_cols = ["freight_price", "unit_price", "s", "comp_1", "comp_2", "comp_3", "lag_price", "avg_comp_price_by_product", "avg_customers_by_product", "avg_unit_price_by_product"]
     
     def feature_engineering(self, df):
-        """Applies categorical encoding to the input DataFrame."""
+        """Applying Feature Engineering to the input DataFrame."""
+        
         df = df.copy()  # Avoid modifying original DataFrame
+        # Encoding categorical column
         df["product_category_name"] = df["product_category_name"].map(self.pcn_encode_dict)
+
+        # A New Column: Avg unit_price, which will contain the mean of unit_price for each group of same month, product_category_name.
+        df["avg_unit_price_by_product"] = df.groupby(["month", "product_category_name"])["unit_price"].transform("mean")
+
+        # A New Column: Avg customers, which will contain the mean number of customers for each group of same month, product_category_name.
+        df["avg_customers_by_product"] = df.groupby(["month", "product_category_name"])["customers"].transform("mean")
+
+        # A New Column: Average Competitor Prices, which will contain the mean of 3 competitor prices for each group of same month, product_category_name.
+        df["avg_comp_price_by_product"] = df.groupby(["month", "product_category_name"])[["comp_1", "comp_2", "comp_3"]].transform("mean").mean(axis=1)
+
+        # Roudning off float value columns to 2 digits.
+        for col in self.round_cols:
+            df[col] = df[col].round(2)
+
         return df
     
     def train(self, X_train, y_train):

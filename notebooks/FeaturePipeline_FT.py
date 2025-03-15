@@ -262,13 +262,9 @@ data.head(10)
 # COMMAND ----------
 
 # DBTITLE 1,Feature engineering
-data["year"] = data["year"] - 2017
-data["weekend"] = data["weekend"] - 8
-data["weekday"] = data["weekday"] - 20
-
-round_cols = ["freight_price", "unit_price", "s", "comp_1", "comp_2", "comp_3", "lag_price"]
-for col in round_cols:
-    data[col] = data[col].round(2)
+# data["year"] = data["year"] - 2017
+# data["weekend"] = data["weekend"] - 8
+# data["weekday"] = data["weekday"] - 20
 
 # COMMAND ----------
 
