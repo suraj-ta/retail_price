@@ -232,10 +232,10 @@ model = DemandForecastingModel()
 model.train(X_train, y_train)
 
 # Predictions using the trained model.
-y_pred_train = model.predict(X_train)
+y_pred_train = model.predict(context=None, X_test=X_train)
 print("y_pred_train shape:", y_pred_train.shape)
 
-y_pred = model.predict(X_test)
+y_pred = model.predict(context=None, X_test=X_test)
 print("y_pred shape:", y_pred.shape)
 
 
