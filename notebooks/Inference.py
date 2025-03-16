@@ -288,8 +288,9 @@ type(predictions)
 
 # COMMAND ----------
 
-transformed_features_df["prediction"] = predictions
-transformed_features_df = pd.merge(transformed_features_df,ground_truth, on=input_table_configs["input_1"]["primary_keys"], how='inner')
+transformed_features_df["prediction"] = predictions.round().astype(int)
+
+transformed_features_df = pd.merge(transformed_features_df, ground_truth, on=input_table_configs["input_1"]["primary_keys"], how='inner')
 output_table = spark.createDataFrame(transformed_features_df)
 
 # COMMAND ----------

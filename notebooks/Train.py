@@ -217,9 +217,11 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
         # Train XGBoost Model
         self.model = xgb.XGBRegressor(
             objective='reg:squarederror',
-            max_depth=6,
+            max_depth=5,
             learning_rate=0.3,
-            n_estimators=100,
+            n_estimators=500,
+            reg_lambda=10,            # L2 regularization
+            reg_alpha=2,              # L1 regularization
             eval_metric='rmse'
         )
         self.model.fit(X_train, y_train)
