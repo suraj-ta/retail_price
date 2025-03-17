@@ -120,7 +120,7 @@ train:
       output_1:
         catalog_name: mlcore_dev
         schema: retail_prices_1503_v2
-        table: train_output_retail_prices_1503_v2
+        table: train_output_retail_prices_1503_v2_new
         primary_keys: index
   model_configs:
     registry_platform: databricks
@@ -130,7 +130,7 @@ train:
       catalog_name: mlcore_dev
       schema_name: retail_prices_1503_v2
     model_params:      
-      model_name: model_retail_prices_1503_v2
+      model_name: model_retail_prices_1503_v2_new
   storage_configs:
     cloud_provider: databricks_uc
     params:
