@@ -21,6 +21,7 @@ stagemetrics.begin()
 # DBTITLE 1,Load the YAML config
 import yaml
 import json
+import pandas as pd
 from MLCORE_SDK import mlclient
 from pyspark.sql import functions as F
 # import pickle
@@ -140,9 +141,13 @@ def to_date_(col):
 # )
 # output_1_df = output_1_df.withColumn("date", F.lit(date))
 # output_1_df = output_1_df.withColumn("date", to_date_(F.col("date")))
+output_1_df = output_1_df.toPandas()
 
 output_1_df['date'] = pd.to_datetime(output_1_df[['year', 'month']].assign(day=1)) + pd.offsets.MonthEnd(0)
 output_1_df['date'] = output_1_df['date'].dt.strftime('%Y-%m-%d')
+
+output_1_df = spark.createDataFrame(output_1_df)
+
 output_1_df.display()
 
 # COMMAND ----------

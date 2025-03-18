@@ -132,15 +132,18 @@ def to_date_(col):
 # COMMAND ----------
 
 # DBTITLE 1,ADD A MONOTONICALLY INREASING COLUMN - "id"
-now = datetime.now()
-date = now.strftime("%m-%d-%Y")
-output_1_df = output_1_df.withColumn(
-    "timestamp",
-    F.expr("reflect('java.lang.System', 'currentTimeMillis')").cast("long"),
-)
-output_1_df = output_1_df.withColumn("date", F.lit(date))
-output_1_df = output_1_df.withColumn("date", to_date_(F.col("date")))
+# now = datetime.now()
+# date = now.strftime("%m-%d-%Y")
+# output_1_df = output_1_df.withColumn(
+#     "timestamp",
+#     F.expr("reflect('java.lang.System', 'currentTimeMillis')").cast("long"),
+# )
+# output_1_df = output_1_df.withColumn("date", F.lit(date))
+# output_1_df = output_1_df.withColumn("date", to_date_(F.col("date")))
 
+# output_1_df['date'] = pd.to_datetime(output_1_df[['year', 'month']].assign(day=1)) + pd.offsets.MonthEnd(0)
+# output_1_df['date'] = output_1_df['date'].dt.strftime('%Y-%m-%d')
+# output_1_df.display()
 
 # COMMAND ----------
 
