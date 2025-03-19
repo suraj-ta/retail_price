@@ -125,8 +125,23 @@ def get_task_logger(catalog_name, db_name, table_name):
 def get_the_batch_data(catalog_name, db_name, source_data_path, task_logger_table_name, batch_size):
     start_marker, end_marker = get_task_logger(catalog_name, db_name, task_logger_table_name)
     query = f"SELECT * FROM {source_data_path} WHERE YEAR(date) = 2018"
-    if start_marker and end_marker:
-        query += f" AND {generate_filter_condition(start_marker, end_marker)}"
+
+    catalog_name = output_table_configs["output_1"]["catalog_name"]
+    db_name = output_table_configs["output_1"]["schema"]
+    table_name = output_table_configs["output_1"]["table"]
+    
+    table_exists = spark.sql(f"SHOW TABLES IN {catalog_name}.{db_name}").filter(f"tableName = '{table_name}'").count() > 0
+
+    if table_exists:
+        df = spark.sql(f"SELECT * FROM output_table_paths['output_1']")
+        max_id = df.select(F.max("id")).collect()[0][0]
+        query += f" AND id > {max_id}"
+    else:
+        query += f" AND id > 0"
+
+    # if start_marker and end_marker:
+    #     query += f" AND {generate_filter_condition(start_marker, end_marker)}"
+    
     query += " ORDER BY id"
     query += f" LIMIT {batch_size}"
     print(f"SQL QUERY  : {query}")
