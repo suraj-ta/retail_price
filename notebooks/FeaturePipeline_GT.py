@@ -129,11 +129,12 @@ def get_the_batch_data(catalog_name, db_name, source_data_path, task_logger_tabl
     catalog_name = output_table_configs["output_1"]["catalog_name"]
     db_name = output_table_configs["output_1"]["schema"]
     table_name = output_table_configs["output_1"]["table"]
+    table_path = f"{catalog_name}.{db_name}.{table_name}"
     
     table_exists = spark.sql(f"SHOW TABLES IN {catalog_name}.{db_name}").filter(f"tableName = '{table_name}'").count() > 0
 
     if table_exists:
-        df = spark.sql(f"SELECT * FROM output_table_paths['output_1']")
+        df = spark.sql(f"SELECT * FROM {table_path}")
         max_id = df.select(F.max("id")).collect()[0][0]
         query += f" AND id > {max_id}"
     else:
