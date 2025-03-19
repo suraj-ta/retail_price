@@ -159,6 +159,7 @@ train:
     - comp_2
     - comp_3
     - lag_price
+    - date
   date_column:
   target_columns:
     - units_sold

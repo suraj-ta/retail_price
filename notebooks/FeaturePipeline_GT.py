@@ -124,9 +124,9 @@ def get_task_logger(catalog_name, db_name, table_name):
 
 def get_the_batch_data(catalog_name, db_name, source_data_path, task_logger_table_name, batch_size):
     start_marker, end_marker = get_task_logger(catalog_name, db_name, task_logger_table_name)
-    query = f"SELECT * FROM {source_data_path}"
+    query = f"SELECT * FROM {source_data_path} WHERE YEAR(date) = 2018"
     if start_marker and end_marker:
-        query += f" WHERE {generate_filter_condition(start_marker, end_marker)}"
+        query += f" AND {generate_filter_condition(start_marker, end_marker)}"
     query += " ORDER BY id"
     query += f" LIMIT {batch_size}"
     print(f"SQL QUERY  : {query}")
@@ -195,7 +195,7 @@ if task.lower() != "fe":
     print(start_marker)
     print(end_marker)
 else :
-    source_1_df = spark.sql(f"SELECT * FROM {input_table_paths['input_1']}")
+    source_1_df = spark.sql(f"SELECT * FROM {input_table_paths['input_1']} WHERE YEAR(date) = 2017")
     if is_retrain:
         for data_entry in retrain_params.get("train_data_date_list", []):
             if "Ground_Truth" in data_entry.get("job_sub_type", []):
@@ -249,11 +249,12 @@ mlclient.log(
 
 # COMMAND ----------
 
-source_1_df = source_1_df.withColumnRenamed("qty", "units_sold")
+# source_1_df = source_1_df.withColumnRenamed("qty", "units_sold")
 
 # COMMAND ----------
 
-output_1_df = source_1_df.drop('date','timestamp')
+# output_1_df = source_1_df.drop('date','timestamp')
+output_1_df = source_1_df.drop('timestamp')
 
 # COMMAND ----------
 
@@ -283,14 +284,14 @@ def to_date_(col):
 # COMMAND ----------
 
 # from datetime import datetime
-now = datetime.now()
-date = now.strftime("%m-%d-%Y")
+# now = datetime.now()
+# date = now.strftime("%m-%d-%Y")
 output_1_df = output_1_df.withColumn(
     "timestamp",
     F.expr("reflect('java.lang.System', 'currentTimeMillis')").cast("long"),
 )
-output_1_df = output_1_df.withColumn("date", F.lit(date))
-output_1_df = output_1_df.withColumn("date", to_date_(F.col("date")))
+# output_1_df = output_1_df.withColumn("date", F.lit(date))
+# output_1_df = output_1_df.withColumn("date", to_date_(F.col("date")))
 
 # ADD A MONOTONICALLY INREASING COLUMN
 if "id" not in output_1_df.columns : 

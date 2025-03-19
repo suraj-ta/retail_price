@@ -108,6 +108,7 @@ mlclient.log(
 output_1_df = source_1_df.drop('date','id','timestamp')
 output_1_df = output_1_df.withColumnRenamed("Index", "index")
 
+
 # COMMAND ----------
 
 # DBTITLE 1,Creating hive database if it doesn't exist
@@ -134,16 +135,27 @@ def to_date_(col):
 # DBTITLE 1,ADD A MONOTONICALLY INREASING COLUMN - "id"
 # now = datetime.now()
 # date = now.strftime("%m-%d-%Y")
-# output_1_df = output_1_df.withColumn(
-#     "timestamp",
-#     F.expr("reflect('java.lang.System', 'currentTimeMillis')").cast("long"),
-# )
+output_1_df = output_1_df.withColumn(
+    "timestamp",
+    F.expr("reflect('java.lang.System', 'currentTimeMillis')").cast("long"),
+)
 # output_1_df = output_1_df.withColumn("date", F.lit(date))
 # output_1_df = output_1_df.withColumn("date", to_date_(F.col("date")))
 
-# output_1_df['date'] = pd.to_datetime(output_1_df[['year', 'month']].assign(day=1)) + pd.offsets.MonthEnd(0)
-# output_1_df['date'] = output_1_df['date'].dt.strftime('%Y-%m-%d')
-# output_1_df.display()
+output_1_df = output_1_df.toPandas()
+
+output_1_df['date'] = pd.to_datetime(output_1_df[['year', 'month']].assign(day=1)) + pd.offsets.MonthEnd(0)
+output_1_df['date'] = output_1_df['date'].dt.strftime('%Y-%m-%d')
+output_1_df['date'] = pd.to_datetime(output_1_df['date'])
+# Sort by date
+output_1_df = output_1_df.sort_values(by='date')
+
+output_1_df = spark.createDataFrame(output_1_df)
+output_1_df.display()
+
+# COMMAND ----------
+
+output_1_df = output_1_df.select("index", "date", "units_sold")
 
 # COMMAND ----------
 

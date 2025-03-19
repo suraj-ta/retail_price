@@ -108,6 +108,12 @@ output_table_paths = get_name_space(output_table_configs)
 
 # COMMAND ----------
 
+import calendar
+from datetime import timedelta
+from pyspark.sql.functions import min, max
+
+# COMMAND ----------
+
 # Table Exists or Not
 def table_already_created(catalog_name, db_name, table_name):
     db_name = f"{catalog_name}.{db_name}" if catalog_name else db_name
@@ -123,7 +129,38 @@ def get_task_logger(catalog_name, db_name, table_name):
             return task_logger["start_marker"], task_logger["end_marker"]
     return 0, 0
 
-def get_the_batch_data(catalog_name, db_name, source_data_path, task_logger_table_name, batch_size):
+def get_the_batch_data(catalog_name, db_name, source_data_path, task_logger_table_name):
+    start_marker, end_marker = get_task_logger(catalog_name, db_name, task_logger_table_name)
+    query_date = f"SELECT * FROM {source_data_path}"
+    if start_marker and end_marker:
+        query_date += f" WHERE {generate_filter_condition(start_marker, end_marker)}"
+    filtered_df = spark.sql(query_date)
+    first_record = filtered_df.first()
+    first_date = first_record['date']
+
+    # Get the last day of the month dynamically
+    last_day = calendar.monthrange(first_date.year, first_date.month)[1]
+    new_date = first_date.replace(day=last_day)  # Set new_date to the last date of that month
+    # new_date = first_date + timedelta(days=30)
+    
+    filtered_df = filtered_df.filter((F.col('date') >= first_date) & (F.col('date') <= new_date))
+    min_id = filtered_df.agg(min('id')).collect()[0][0]
+    max_id = filtered_df.agg(max('id')).collect()[0][0]
+    print("Minimum ID:", min_id)
+    print("Maximum ID:", max_id)
+    batch_size=max_id-min_id+1
+    print(f"Batch Size : {batch_size}")
+
+    query = f"SELECT * FROM {source_data_path}"
+    if start_marker and end_marker:
+        query += f" WHERE {generate_filter_condition(start_marker, end_marker)}"
+    query += " ORDER BY id"
+    query += f" LIMIT {batch_size}"
+    print(f"SQL QUERY  : {query}")
+    filtered_df = spark.sql(query)
+    return filtered_df, start_marker, end_marker, batch_size
+
+def get_the_batch_data_gt(catalog_name, db_name, source_data_path, task_logger_table_name, batch_size):
     start_marker, end_marker = get_task_logger(catalog_name, db_name, task_logger_table_name)
     query = f"SELECT * FROM {source_data_path}"
     if start_marker and end_marker:
@@ -192,12 +229,16 @@ task_logger_table_name = f"{output_table_configs['output_1']['table']}_task_logg
 
 # COMMAND ----------
 
-features_df,start_marker,end_marker = get_the_batch_data(output_table_configs["output_1"]["catalog_name"], output_table_configs["output_1"]["schema"], input_table_paths['input_1'], task_logger_table_name, batch_size)
+features_df, start_marker, end_marker, batch_size = get_the_batch_data(output_table_configs["output_1"]["catalog_name"], output_table_configs["output_1"]["schema"], input_table_paths['input_1'], task_logger_table_name)
+print(start_marker)
+print(end_marker)
+print(batch_size)
 
-gt_df,start_marker,end_marker = get_the_batch_data(output_table_configs["output_1"]["catalog_name"], output_table_configs["output_1"]["schema"], input_table_paths['input_2'], task_logger_table_name, batch_size)
+gt_df, start_marker, end_marker = get_the_batch_data_gt(output_table_configs["output_1"]["catalog_name"], output_table_configs["output_1"]["schema"], input_table_paths['input_2'], task_logger_table_name, batch_size)
 
 print(start_marker)
 print(end_marker)
+print(batch_size)
 
 # COMMAND ----------
 
