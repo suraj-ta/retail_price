@@ -21,6 +21,7 @@ stagemetrics.begin()
 # DBTITLE 1,Load the YAML config
 import yaml
 import json
+import pandas as pd
 from MLCORE_SDK import mlclient
 from pyspark.sql import functions as F
 # import pickle
