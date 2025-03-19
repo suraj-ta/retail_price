@@ -193,6 +193,10 @@ class DemandForecastingModel(mlflow.pyfunc.PythonModel):
         """Applying Feature Engineering to the input DataFrame."""
         
         df = df.copy()  # Avoid modifying original DataFrame
+        
+        # Drop the date column
+        df.drop(columns=["date"], inplace=True)
+
         # Encoding categorical column
         df["product_category_name"] = df["product_category_name"].map(self.pcn_encode_dict)
 
