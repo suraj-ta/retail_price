@@ -132,8 +132,24 @@ def get_task_logger(catalog_name, db_name, table_name):
 def get_the_batch_data(catalog_name, db_name, source_data_path, task_logger_table_name):
     start_marker, end_marker = get_task_logger(catalog_name, db_name, task_logger_table_name)
     query_date = f"SELECT * FROM {source_data_path}"
-    if start_marker and end_marker:
-        query_date += f" WHERE {generate_filter_condition(start_marker, end_marker)}"
+
+    catalog_name = output_table_configs["output_1"]["catalog_name"]
+    db_name = output_table_configs["output_1"]["schema"]
+    table_name = output_table_configs["output_1"]["table"]
+    table_path = f"{catalog_name}.{db_name}.{table_name}"
+    
+    table_exists = spark.sql(f"SHOW TABLES IN {catalog_name}.{db_name}").filter(f"tableName = '{table_name}'").count() > 0
+
+    if table_exists:
+        df = spark.sql(f"SELECT * FROM {table_path}")
+        max_id = df.select(F.max("id")).collect()[0][0]
+        query_date += f" AND id > {max_id}"
+    else:
+        query_date += f" AND id > 0"
+
+    # if start_marker and end_marker:
+    #     query_date += f" WHERE {generate_filter_condition(start_marker, end_marker)}"
+
     filtered_df = spark.sql(query_date)
     first_record = filtered_df.first()
     first_date = first_record['date']
@@ -152,8 +168,22 @@ def get_the_batch_data(catalog_name, db_name, source_data_path, task_logger_tabl
     print(f"Batch Size : {batch_size}")
 
     query = f"SELECT * FROM {source_data_path}"
-    if start_marker and end_marker:
-        query += f" WHERE {generate_filter_condition(start_marker, end_marker)}"
+    # if start_marker and end_marker:
+    #     query += f" WHERE {generate_filter_condition(start_marker, end_marker)}"
+    catalog_name = output_table_configs["output_1"]["catalog_name"]
+    db_name = output_table_configs["output_1"]["schema"]
+    table_name = output_table_configs["output_1"]["table"]
+    table_path = f"{catalog_name}.{db_name}.{table_name}"
+    
+    table_exists = spark.sql(f"SHOW TABLES IN {catalog_name}.{db_name}").filter(f"tableName = '{table_name}'").count() > 0
+
+    if table_exists:
+        df = spark.sql(f"SELECT * FROM {table_path}")
+        max_id = df.select(F.max("id")).collect()[0][0]
+        query += f" AND id > {max_id}"
+    else:
+        query += f" AND id > 0"
+
     query += " ORDER BY id"
     query += f" LIMIT {batch_size}"
     print(f"SQL QUERY  : {query}")
@@ -163,8 +193,24 @@ def get_the_batch_data(catalog_name, db_name, source_data_path, task_logger_tabl
 def get_the_batch_data_gt(catalog_name, db_name, source_data_path, task_logger_table_name, batch_size):
     start_marker, end_marker = get_task_logger(catalog_name, db_name, task_logger_table_name)
     query = f"SELECT * FROM {source_data_path}"
-    if start_marker and end_marker:
-        query += f" WHERE {generate_filter_condition(start_marker, end_marker)}"
+    
+    # if start_marker and end_marker:
+    #     query += f" WHERE {generate_filter_condition(start_marker, end_marker)}"
+    
+    catalog_name = output_table_configs["output_1"]["catalog_name"]
+    db_name = output_table_configs["output_1"]["schema"]
+    table_name = output_table_configs["output_1"]["table"]
+    table_path = f"{catalog_name}.{db_name}.{table_name}"
+    
+    table_exists = spark.sql(f"SHOW TABLES IN {catalog_name}.{db_name}").filter(f"tableName = '{table_name}'").count() > 0
+
+    if table_exists:
+        df = spark.sql(f"SELECT * FROM {table_path}")
+        max_id = df.select(F.max("id")).collect()[0][0]
+        query += f" AND id > {max_id}"
+    else:
+        query += f" AND id > 0"
+
     query += " ORDER BY id"
     query += f" LIMIT {batch_size}"
     print(f"SQL QUERY  : {query}")
