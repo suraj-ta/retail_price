@@ -3,6 +3,7 @@
 # MAGIC
 
 # COMMAND ----------
+
 # MAGIC %pip install /Volumes/mlcore_dev/mlcore_init_scripts/mlworkspace/MLCORE_INIT/monitor_db_uc/MLCoreSDK_monitor_db_uc-0.4.6-py3-none-any.whl --force-reinstall
 # MAGIC %pip install sparkmeasure
 # MAGIC %pip install -U kaleido
