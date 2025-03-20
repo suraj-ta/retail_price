@@ -156,9 +156,6 @@ final_df_pandas.shape
 
 # DBTITLE 1,Dropping the null rows in the final df
 final_df_pandas.dropna(inplace=True)
-
-# COMMAND ----------
-
 final_df_pandas.shape
 
 # COMMAND ----------

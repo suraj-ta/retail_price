@@ -253,27 +253,9 @@ mlclient.log(
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC
-# MAGIC ### FEATURE ENGINEERING
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC
-# MAGIC ##### FEATURE ENGINEERING on Ground Truth Data
-
-# COMMAND ----------
-
 # source_1_df = source_1_df.withColumnRenamed("qty", "units_sold")
-
-# COMMAND ----------
-
 # output_1_df = source_1_df.drop('date','timestamp')
 output_1_df = source_1_df.drop('timestamp')
-
-# COMMAND ----------
-
 output_1_df.display()
 
 # COMMAND ----------

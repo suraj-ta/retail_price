@@ -257,42 +257,14 @@ mlclient.log(
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC
-# MAGIC ### FEATURE ENGINEERING
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC
-# MAGIC ##### FEATURE ENGINEERING on Feature Data
-
-# COMMAND ----------
-
 data = source_1_df.toPandas()
-
-# COMMAND ----------
-
 data.head(10)
 
 # COMMAND ----------
 
-# DBTITLE 1,Feature engineering
-# data["year"] = data["year"] - 2017
-# data["weekend"] = data["weekend"] - 8
-# data["weekday"] = data["weekday"] - 20
-
-# COMMAND ----------
-
 output_1_df = spark.createDataFrame(data)
-
-# COMMAND ----------
-
 # output_1_df = output_1_df.drop('date','timestamp')
 output_1_df = output_1_df.drop('timestamp')
-
-# COMMAND ----------
-
 output_1_df.display()
 
 # COMMAND ----------
