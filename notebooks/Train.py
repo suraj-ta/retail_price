@@ -374,14 +374,14 @@ def to_date_(col):
 # COMMAND ----------
 
 # DBTITLE 1,Adding Timestamp and Date Features to a Source 1
-now = datetime.now()
-date = now.strftime("%m-%d-%Y")
+# now = datetime.now()
+# date = now.strftime("%m-%d-%Y")
 train_output_df = train_output_df.withColumn(
     "timestamp",
     F.expr("reflect('java.lang.System', 'currentTimeMillis')").cast("long"),
 )
-train_output_df = train_output_df.withColumn("date", F.lit(date))
-train_output_df = train_output_df.withColumn("date", to_date_(F.col("date")))
+# train_output_df = train_output_df.withColumn("date", F.lit(date))
+# train_output_df = train_output_df.withColumn("date", to_date_(F.col("date")))
 
 # ADD A MONOTONICALLY INREASING COLUMN
 if "id" not in train_output_df.columns : 
