@@ -1,7 +1,7 @@
 resources:
   jobs:
-    model_retail_prices_1903_v2_inference:
-      name: model_retail_prices_1903_v2_inference
+    model_retail_prices_2908_v2_inference:
+      name: model_retail_prices_2908_v2_inference
       type: Inference
       #is_deterministic: False
 

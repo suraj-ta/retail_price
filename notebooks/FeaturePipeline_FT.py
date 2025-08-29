@@ -269,6 +269,14 @@ output_1_df.display()
 
 # COMMAND ----------
 
+round_cols = ["freight_price", "unit_price", "s", "comp_1", "comp_2", "comp_3", "lag_price", "avg_comp_price_by_product", "avg_customers_by_product", "avg_unit_price_by_product"]
+
+# Roudning off float value columns to 2 digits.
+for col in round_cols:
+    output_1_df[col] = output_1_df[col].round(2)
+
+# COMMAND ----------
+
 def to_date_(col):
     """
     Checks col row-wise and returns first date format which returns non-null output for the respective column value

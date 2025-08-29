@@ -47,11 +47,6 @@ except:
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## PERFORM MODEL TRAINING 
-
-# COMMAND ----------
-
 # DBTITLE 1,Imports
 import pandas as pd
 from sklearn.impute import SimpleImputer
@@ -157,6 +152,11 @@ final_df_pandas.shape
 # DBTITLE 1,Dropping the null rows in the final df
 final_df_pandas.dropna(inplace=True)
 final_df_pandas.shape
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## MODEL TRAINING 
 
 # COMMAND ----------
 
@@ -289,11 +289,6 @@ train_metrics
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## SAVE PREDICTIONS TO HIVE
-
-# COMMAND ----------
-
 pred_train = traindf
 pred_train["prediction"] = y_pred_train
 pred_train["dataset_type_71E4E76EB8C12230B6F51EA2214BD5FE"] = "train"
@@ -370,7 +365,6 @@ def to_date_(col):
 
 # COMMAND ----------
 
-# DBTITLE 1,Adding Timestamp and Date Features to a Source 1
 # now = datetime.now()
 # date = now.strftime("%m-%d-%Y")
 train_output_df = train_output_df.withColumn(
@@ -493,7 +487,7 @@ mlclient.log(
 
 # MAGIC %md
 # MAGIC
-# MAGIC ## REGISTER MODEL IN MLCORE
+# MAGIC ## REGISTER MODEL
 
 # COMMAND ----------
 
