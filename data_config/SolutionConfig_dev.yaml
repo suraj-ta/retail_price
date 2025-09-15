@@ -4,7 +4,7 @@ general_configs:
     uat: d98eddaad3ef4f77a3bf308fcca9692a
     prod: 64ec92d6117247877965d152
   tracking_env: dev
-  tracking_url : https://mlcagentflowdevbackend.azurewebsites.net/
+  tracking_url : mlcagentflowdevbackend.azurewebsites.net
 
 
 data_engineering_ft:
