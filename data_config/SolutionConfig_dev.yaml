@@ -18,8 +18,8 @@ data_engineering_ft:
     output_tables:
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: retail_prices_1509_v3_ft
+        schema: retail_prices_1509_v4
+        table: retail_prices_1509_v4_ft
         primary_keys: index
   storage_configs:
     cloud_provider: databricks_uc
@@ -43,8 +43,8 @@ data_engineering_gt:
     output_tables:
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: retail_prices_1509_v3_gt
+        schema: retail_prices_1509_v4
+        table: retail_prices_1509_v4_gt
         primary_keys: index
   storage_configs:
     cloud_provider: databricks_uc
@@ -62,14 +62,14 @@ feature_pipelines_ft:
     input_tables:
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: retail_prices_1509_v3_ft
+        schema: retail_prices_1509_v4
+        table: retail_prices_1509_v4_ft
         primary_keys: index
     output_tables:
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: Transformed_retail_prices_1509_v3_ft
+        schema: retail_prices_1509_v4
+        table: Transformed_retail_prices_1509_v4_ft
         primary_keys: index
   storage_configs:
     cloud_provider: databricks_uc
@@ -85,14 +85,14 @@ feature_pipelines_gt:
     input_tables: 
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: retail_prices_1509_v3_gt
+        schema: retail_prices_1509_v4
+        table: retail_prices_1509_v4_gt
         primary_keys: index
     output_tables: 
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: Transformed_retail_prices_1509_v3_gt
+        schema: retail_prices_1509_v4
+        table: Transformed_retail_prices_1509_v4_gt
         primary_keys: index
   storage_configs:
     cloud_provider: databricks_uc
@@ -108,19 +108,19 @@ train:
     input_tables: 
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: Transformed_retail_prices_1509_v3_ft
+        schema: retail_prices_1509_v4
+        table: Transformed_retail_prices_1509_v4_ft
         primary_keys: index
       input_2:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: Transformed_retail_prices_1509_v3_gt
+        schema: retail_prices_1509_v4
+        table: Transformed_retail_prices_1509_v4_gt
         primary_keys: index
     output_tables: 
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: train_output_retail_prices_1509_v3
+        schema: retail_prices_1509_v4
+        table: train_output_retail_prices_1509_v4
         primary_keys: index
   model_configs:
     registry_platform: databricks
@@ -128,9 +128,9 @@ train:
     unity_catalog: "yes"
     model_registry_params:
       catalog_name: mlcore_dev
-      schema_name: retail_prices_1509_v3
+      schema_name: retail_prices_1509_v4
     model_params:      
-      model_name: model_retail_prices_1509_v3
+      model_name: model_retail_prices_1509_v4
   storage_configs:
     cloud_provider: databricks_uc
     params:
@@ -169,14 +169,14 @@ data_prep_deployment_ft:
     input_tables:
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: retail_prices_1509_v3_ft
+        schema: retail_prices_1509_v4
+        table: retail_prices_1509_v4_ft
         primary_keys: index
     output_tables:
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: dpd_retail_prices_1509_v3_ft
+        schema: retail_prices_1509_v4
+        table: dpd_retail_prices_1509_v4_ft
         primary_keys: index  
   storage_configs:
     cloud_provider: databricks_uc
@@ -194,14 +194,14 @@ data_prep_deployment_gt:
     input_tables: 
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: retail_prices_1509_v3_gt
+        schema: retail_prices_1509_v4
+        table: retail_prices_1509_v4_gt
         primary_keys: index
     output_tables: 
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: dpd_retail_prices_1509_v3_gt
+        schema: retail_prices_1509_v4
+        table: dpd_retail_prices_1509_v4_gt
         primary_keys: index  
   storage_configs:
     cloud_provider: databricks_uc
@@ -219,19 +219,19 @@ inference:
     input_tables: 
       input_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: dpd_retail_prices_1509_v3_ft
+        schema: retail_prices_1509_v4
+        table: dpd_retail_prices_1509_v4_ft
         primary_keys: index
       input_2:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: dpd_retail_prices_1509_v3_gt
+        schema: retail_prices_1509_v4
+        table: dpd_retail_prices_1509_v4_gt
         primary_keys: index
     output_tables: 
       output_1:
         catalog_name: mlcore_dev
-        schema: retail_prices_1509_v3
-        table: inference_output_retail_prices_1509_v3
+        schema: retail_prices_1509_v4
+        table: inference_output_retail_prices_1509_v4
         primary_keys: index
   model_configs:
     use_latest_version: true
