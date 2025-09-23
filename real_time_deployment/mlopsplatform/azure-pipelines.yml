@@ -1,0 +1,119 @@
+# Azure DevOps Pipeline for deploying ML models via Seldon and ArgoCD
+trigger:
+- none
+
+variables:
+- group: mlopsplatform-variables-mlc-dev
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: model_name
+    displayName: 'Model Name'
+    type: string
+  - name: model_version
+    displayName: 'Model Version'
+    type: number
+  - name: deployment_env
+    displayName: 'Deployment Environment'
+    type: string
+    values:
+    - 'dev'
+    - 'stag'
+    - 'prod'
+  - name: model_uri
+    displayName: 'Model URI'
+    type: string
+    default:
+  - name: trained_on_feature_table
+    displayName: 'Features trained on'
+    type: object
+    default: 
+  - name: model_server
+    displayName: 'Model Server'
+    type: string
+    default: SKLEARN
+  - name: model_artifact_id
+    displayName: 'Model Artifact'
+    type: string
+  - name: platform_env
+    displayName: 'Platform ENV'
+    type: string
+  - name: labels_path
+    displayName: 'Label Path'
+    type: string
+    default: 'Label Path'
+
+stages:
+- stage: Databricks_to_blob
+  displayName: "Stage 1: Databricks → Azure Blob"
+  jobs:
+  - job: Databricks_to_blob
+    displayName: "Job: Download and Upload Model"
+    steps:
+    - task: Bash@3
+      displayName: 'Install Python packages'
+      inputs:
+        targetType: 'inline'
+        script: |
+          python -m pip install -r workers/requirements.txt
+          mkdir -p databricks_download
+
+    - task: PythonScript@0
+      displayName: 'Download model from Databricks'
+      inputs:
+        scriptSource: filePath
+        scriptPath: workers/databricks_handler/databricks_artifact_downloader.py
+        arguments: $(${{parameters.platform_env}}-host) $(${{parameters.platform_env}}-token) "${{parameters.model_name}}" ${{parameters.model_version}}
+
+    - task: Bash@3
+      displayName: 'Fix model extension'
+      inputs:
+        targetType: 'inline'
+        script: mv databricks_download/model.pkl databricks_download/model.joblib
+
+    - task: PythonScript@0
+      displayName: 'Upload model to Azure Blob Storage'
+      inputs:
+        scriptSource: filePath
+        scriptPath: workers/databricks_handler/artifact_uploader.py
+        arguments: $(azureblobaccountname) $(azureblobaccountkey) model-${{parameters.model_artifact_id}} ${{parameters.deployment_env}} ${{parameters.model_version}}
+
+- stage: manifest_updater
+  displayName: "Stage 2: Update Manifest"
+  jobs:
+  - job: manifest_updater
+    displayName: "Job: Pull → Update → Push Manifest"
+    steps:
+    - task: Bash@3
+      displayName: 'Pull manifest repo'
+      inputs:
+        targetType: 'inline'
+        script: bash workers/manifest_handler/pull.sh $(azure_repo_pat_token)
+
+    - task: PythonScript@0
+      displayName: 'Update manifest'
+      inputs:
+        scriptSource: filePath
+        scriptPath: workers/manifest_handler/manfiest_updater.py
+        arguments: model-${{parameters.model_artifact_id}} ${{parameters.deployment_env}} ${{parameters.model_version}}
+
+    - task: Bash@3
+      displayName: 'Push updated manifest'
+      inputs:
+        targetType: 'inline'
+        script: bash workers/manifest_handler/push.sh
+
+- stage: argocd_application_creator
+  displayName: "Stage 3: Deploy via ArgoCD"
+  jobs:
+  - job: argocd_application_creator
+    displayName: "Job: Create ArgoCD application"
+    steps:
+    - task: PythonScript@0
+      displayName: 'Create ArgoCD Application'
+      inputs:
+        scriptSource: filePath
+        scriptPath: workers/argocd_handler/argocd_application_creator.py
+        arguments: $(argocd_username) $(argocd_password) $(argocd_url) model-${{parameters.model_artifact_id}} ${{parameters.deployment_env}}

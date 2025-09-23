@@ -1,0 +1,31 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: model-12345
+  namespace: dev
+spec:
+  predictors:
+  - graph:
+      env:
+      - name: AZURE_STORAGE_ACCOUNT
+        valueFrom:
+          secretKeyRef:
+            key: AZURE_STORAGE_ACCOUNT
+            name: sa-access-secret
+      - name: AZURE_STORAGE_KEY
+        valueFrom:
+          secretKeyRef:
+            key: AZURE_STORAGE_KEY
+            name: sa-access-secret
+      envSecretRefName: sa-access-secret
+      implementation: SKLEARN_SERVER
+      modelUri: azureblob:model-artifacts/model-12345/dev/3
+      name: model-12345-graph
+      parameters:
+      - name: method
+        type: STRING
+        value: predict
+      serviceAccountName: myserviceaccount
+      storageInitializerImage: seldonio/rclone-storage-initializer:1.15.0-dev
+    name: default
+    replicas: 1

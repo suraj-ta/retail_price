@@ -1,0 +1,20 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: model-123456789
+  namespace: dev
+spec:
+  predictors:
+  - graph:
+      envSecretRefName: sa-access-secret
+      implementation: SKLEARN_SERVER
+      modelUri: azureblob:model-artifacts/model-123456789/dev/3
+      name: model-123456789-graph
+      parameters:
+      - name: method
+        type: STRING
+        value: predict
+      serviceAccountName: myserviceaccount
+      storageInitializerImage: seldonio/rclone-storage-initializer:1.15.0-dev
+    name: default
+    replicas: 1

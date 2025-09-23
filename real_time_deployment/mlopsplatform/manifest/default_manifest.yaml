@@ -1,0 +1,20 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: MODEL-NAME
+  namespace: DEPLOYMENT-ENV
+spec:
+  predictors:
+  - graph:
+      envSecretRefName: sa-access-secret
+      implementation: MODEL-SERVER
+      modelUri: MODEL-URI
+      name: MODEL-NAME
+      serviceAccountName: myserviceaccount
+      parameters:
+      - name: method
+        type: STRING
+        value: predict
+      storageInitializerImage: seldonio/rclone-storage-initializer:1.15.0-dev
+    name: default
+    replicas: 1

@@ -1,0 +1,20 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: brand17-unitsales-rf
+  namespace: prod
+spec:
+  predictors:
+  - graph:
+      envSecretRefName: mlopsplatformdemo-secret
+      implementation: SKLEARN_CUSTOM_SERVER
+      modelUri: azureblob:model-artifacts/brand17-unitsales-rf/prod/1
+      name: brand17-unitsales-rf-graph
+      parameters:
+      - name: method
+        type: STRING
+        value: predict
+      serviceAccountName: myserviceaccount
+      storageInitializerImage: seldonio/rclone-storage-initializer:1.15.0-dev
+    name: default
+    replicas: 1

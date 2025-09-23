@@ -1,0 +1,150 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- none
+
+variables:
+- group: mlopsplatform-variables-mlc-prod-cust001
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: model_name
+    displayName: 'Model Name'
+    type: string
+  - name: model_version
+    displayName: 'Model Version'
+    type: number
+  - name: deployment_env
+    displayName: 'Deployment Environment'
+    type: string
+    values:
+    - 'dev'
+    - 'stag'
+    - 'prod'
+  - name: model_uri
+    displayName: 'Model URI'
+    type: string
+    default:
+  - name: trained_on_feature_table
+    displayName: 'Features trained on'
+    type: object
+    default: 
+  - name: model_server
+    displayName: 'Model Server'
+    type: string
+    default: SKLEARN
+  - name: model_artifact_id
+    displayName: 'Model Artifact'
+    type: string
+
+
+stages:
+- stage: Databricks_to_blob
+  jobs:
+  - job: Databricks_to_blob
+    steps:
+
+    - task: Bash@3
+      displayName: 'Installing necessary python packages'
+      inputs:
+        targetType: 'inline'
+        script: |
+            python -m pip install -r workers/requirements.txt
+            mkdir databricks_download
+        
+    # - task: Bash@3
+    #   displayName: 'Downloading model'
+    #   inputs:
+    #     targetType: 'inline'
+    #     script: |
+    #         python workers/databricks_handler/databricks_artifact_downloader.py $(databricks_host) $(databricks_token)  "${{parameters.model_name}}" ${{parameters.model_version}}
+
+    - task: PythonScript@0
+      displayName: 'Downloading model'
+      inputs:
+        scriptSource:  filePath
+        scriptPath: workers/databricks_handler/databricks_artifact_downloader.py
+        #arguments: $(databricks_host) $(databricks_token)  ${{parameters.model_name}} ${{parameters.model_version}}
+        arguments: $(databricks_host) $(databricks_token)  $(${{parameters.model_name}}${{parameters.model_version}}) ${{parameters.model_version}}
+    
+    - task: Bash@3
+      displayName: 'Fixing model extensions'
+      inputs:
+        targetType: 'inline'
+        script: mv databricks_download/model.pkl databricks_download/model.joblib
+
+    - task: PythonScript@0
+      displayName: 'Uploading model'
+      inputs:
+        scriptSource:  filePath
+        scriptPath: workers/databricks_handler/artifact_uploader.py
+        arguments: $(azureblobaccountname) $(azureblobaccountkey) model-${{parameters.model_artifact_id}} ${{parameters.deployment_env}} ${{parameters.model_version}}
+        #arguments: $(azureblobaccountname) $(azureblobaccountkey) ${{parameters.model_name}} ${{parameters.deployment_env}} ${{parameters.model_version}}
+
+    # - task: Bash@3
+    #   displayName: 'Uploading model'
+    #   inputs:
+    #     targetType: 'inline'
+    #     script: |
+    #         python workers/databricks_handler/artifact_uploader.py $(azureblobaccountname) $(azureblobaccountkey) "${{parameters.model_name}}" ${{parameters.deployment_env}} ${{parameters.model_version}}
+
+- stage: manifest_updater
+  jobs:   
+  - job: manifest_updater
+    steps:
+    - task: Bash@3
+      displayName: 'Pulling manifest repo'
+      inputs:
+        targetType: 'inline'
+        script: bash workers/manifest_handler/pull.sh $(azure_repo_pat_token)
+
+    - task: PythonScript@0
+      displayName: 'Updating manifest'
+      inputs:
+        scriptSource:  filePath
+        scriptPath: workers/manifest_handler/manfiest_updater.py
+        arguments: model-${{parameters.model_artifact_id}} ${{parameters.deployment_env}} ${{parameters.model_version}}
+        #arguments: ${{parameters.model_name}} ${{parameters.deployment_env}} ${{parameters.model_version}}
+
+    # - task: Bash@3
+    #   displayName: 'Updating manifest'
+    #   inputs:
+    #     targetType: 'inline'
+    #     script: |
+    #         python workers/manifest_handler/manfiest_updater.py "${{parameters.model_name}}" ${{parameters.deployment_env}} ${{parameters.model_version}}
+
+
+    - task: Bash@3
+      displayName: 'Pushing manifest repo'
+      inputs:
+        targetType: 'inline'
+        script: bash workers/manifest_handler/push.sh
+      
+- stage: argocd_application_creator
+  jobs:
+  - job: argocd_application_creator
+    steps:
+
+    - task: PythonScript@0
+      displayName: 'Creating ArgoCD application'
+      inputs:
+        scriptSource:  filePath
+        scriptPath: workers/argocd_handler/argocd_application_creator.py
+        arguments: $(argocd_username) $(argocd_password) $(argocd_url) model-${{parameters.model_artifact_id}} ${{parameters.deployment_env}}
+        #arguments: $(argocd_username) $(argocd_password) $(argocd_url) ${{parameters.model_name}} ${{parameters.deployment_env}}
+
+    # - task: Bash@3
+    #   displayName: 'Creating ArgoCD application'
+    #   inputs:
+    #     targetType: 'inline'
+    #     script: |
+    #         python workers/argocd_handler/argocd_application_creator.py $(argocd_username) $(argocd_password) $(argocd_url) "${{parameters.model_name}}" ${{parameters.deployment_env}}
+
+
+
+

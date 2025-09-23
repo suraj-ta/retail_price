@@ -1,0 +1,20 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: model-642f9a206dfa829c7442c16c
+  namespace: dev
+spec:
+  predictors:
+  - graph:
+      envSecretRefName: mlopsplatformdemo-secret
+      implementation: SKLEARN_CUSTOM_SERVER
+      modelUri: azureblob:model-artifacts/model-642f9a206dfa829c7442c16c/dev/1
+      name: model-642f9a206dfa829c7442c16c-graph
+      parameters:
+      - name: method
+        type: STRING
+        value: predict
+      serviceAccountName: myserviceaccount
+      storageInitializerImage: seldonio/rclone-storage-initializer:1.15.0-dev
+    name: default
+    replicas: 1

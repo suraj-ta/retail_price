@@ -1,0 +1,20 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: random-forest-night-shopper-4-ceb46c342ee54d02a9d95f22daacd0ea-e
+  namespace: dev
+spec:
+  predictors:
+  - graph:
+      envSecretRefName: mlopsplatformdemo-secret
+      implementation: SKLEARN_CUSTOM_SERVER
+      modelUri: azureblob:model-artifacts/random-forest-night-shopper-4-ceb46c342ee54d02a9d95f22daacd0ea-e/dev/1
+      name: random-forest-night-shopper-4-ceb46c342ee54d02a9d95f22daacd0ea-e-graph
+      parameters:
+      - name: method
+        type: STRING
+        value: predict
+      serviceAccountName: myserviceaccount
+      storageInitializerImage: seldonio/rclone-storage-initializer:1.15.0-dev
+    name: default
+    replicas: 1
